@@ -86,15 +86,12 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
     let before_intersection: i32 = 4 * LINE_SPACING;
     let after_intersection: i32 = 10 * LINE_SPACING;
 
-    // the y point to stop at (before intersection)
-    // let y_before_intersection: i32 = 
-
     for i in 4..=10 {
         let x = i * LINE_SPACING;
-        if i == 7 {
-            canvas.set_draw_color(Color::RGB(0, 255, 0)); // Green color for the 4th line
+        if i == 4 || i == 10 || i == 7 {
+            canvas.set_draw_color(Color::RGB(255, 255, 255)); // White color for the first, middle, and last lines
         } else {
-            canvas.set_draw_color(Color::RGB(255, 255, 255)); // White color for other lines
+            canvas.set_draw_color(Color::RGB(128, 128, 128)); // Gray color for other lines
         }
 
         if i == 7 {
@@ -112,7 +109,6 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
             canvas.draw_line((0, x), (before_intersection, x)).unwrap();
             // horizontal line after intersection
             canvas.draw_line((after_intersection, x), (WINDOW_SIZE as i32, x)).unwrap();
-            
         }
     }
 }
