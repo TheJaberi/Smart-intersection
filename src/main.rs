@@ -49,7 +49,7 @@ pub fn main() {
 
         // lines
         canvas.set_draw_color(Color::RGB(255, 255, 255));
-        for i in 4..=6 {
+        for i in 4..=7 {
             let x = i * LINE_SPACING;
             // println!("{}", x);
             canvas.draw_line((x, 0), (x, WINDOW_SIZE as i32)).unwrap();
