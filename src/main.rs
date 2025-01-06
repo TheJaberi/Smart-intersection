@@ -34,6 +34,9 @@ pub fn main() {
 
     let mut last_square_spawn = Instant::now();
 
+    // Draw the lines once at the start
+    draw_lines(&mut canvas);
+
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -58,17 +61,8 @@ pub fn main() {
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
 
-        // lines
-        for i in 4..=10 {
-            let x = i * LINE_SPACING;
-            if i == 7 {
-                canvas.set_draw_color(Color::RGB(0, 255, 0)); // Green color for the 4th line
-            } else {
-                canvas.set_draw_color(Color::RGB(255, 255, 255)); // White color for other lines
-            }
-            canvas.draw_line((x, 0), (x, WINDOW_SIZE as i32)).unwrap();
-            canvas.draw_line((0, x), (WINDOW_SIZE as i32, x)).unwrap();
-        }
+        // Draw the lines every frame
+        draw_lines(&mut canvas);
 
         // square
         // Draw and update squares
@@ -83,5 +77,19 @@ pub fn main() {
 
         canvas.present();
         ::std::thread::sleep(FRAME_DURATION);
+    }
+}
+
+// Function to draw the lines once
+fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
+    for i in 4..=10 {
+        let x = i * LINE_SPACING;
+        if i == 7 {
+            canvas.set_draw_color(Color::RGB(0, 255, 0)); // Green color for the 4th line
+        } else {
+            canvas.set_draw_color(Color::RGB(255, 255, 255)); // White color for other lines
+        }
+        canvas.draw_line((x, 0), (x, WINDOW_SIZE as i32)).unwrap();
+        canvas.draw_line((0, x), (WINDOW_SIZE as i32, x)).unwrap();
     }
 }

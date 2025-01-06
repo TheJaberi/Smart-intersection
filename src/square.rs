@@ -1,7 +1,7 @@
+use crate::constants::*;
 use rand::Rng;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use crate::constants::*;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Direction {
@@ -21,7 +21,6 @@ pub struct Square {
     turn_x: Option<i32>,
     turn_y: Option<i32>,
 }
-
 
 impl Direction {
     pub fn new(exclude: Option<Direction>) -> Direction {
@@ -44,7 +43,7 @@ impl Direction {
             }
         }
     }
-    
+
     pub fn opposite(&self) -> Direction {
         match self {
             Direction::Up => Direction::Down,
@@ -55,9 +54,14 @@ impl Direction {
     }
 }
 
-
 impl Square {
-    pub fn new(x: i32, y: i32, initial_position: Direction, target_direction: Direction, size: u32) -> Self {
+    pub fn new(
+        x: i32,
+        y: i32,
+        initial_position: Direction,
+        target_direction: Direction,
+        size: u32,
+    ) -> Self {
         let mut rng = rand::thread_rng();
         let color = Color::RGB(
             rng.gen_range(0..=255),
@@ -66,7 +70,6 @@ impl Square {
         );
         let rect = Rect::new(x, y, size, size);
         let current_direction = initial_position.opposite();
-
 
         // Calculate turning positions based on target_direction
         let (turn_x, turn_y) = if target_direction == current_direction {
@@ -84,7 +87,15 @@ impl Square {
         //     current_direction, target_direction, turn_x, turn_y
         // );
 
-        Square { rect, color, initial_position, target_direction, current_direction, turn_x, turn_y }
+        Square {
+            rect,
+            color,
+            initial_position,
+            target_direction,
+            current_direction,
+            turn_x,
+            turn_y,
+        }
     }
 
     pub fn update(&mut self) {
@@ -133,5 +144,11 @@ pub fn spawn_squares(squares: &mut Vec<Square>) {
         Direction::Right => (WINDOW_SIZE as i32, 4 * LINE_SPACING, Direction::Left),
     };
 
-    squares.push(Square::new(x, y, initial_position, _target_direction, SQUARE_SIZE));
+    squares.push(Square::new(
+        x,
+        y,
+        initial_position,
+        _target_direction,
+        SQUARE_SIZE,
+    ));
 }
