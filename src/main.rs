@@ -48,10 +48,13 @@ pub fn main() {
         canvas.clear();
 
         // lines
-        canvas.set_draw_color(Color::RGB(255, 255, 255));
-        for i in 4..=7 {
+        for i in 4..=10 {
             let x = i * LINE_SPACING;
-            // println!("{}", x);
+            if i == 7 {
+            canvas.set_draw_color(Color::RGB(0, 255, 0)); // Green color for the 4th line
+            } else {
+            canvas.set_draw_color(Color::RGB(255, 255, 255)); // White color for other lines
+            }
             canvas.draw_line((x, 0), (x, WINDOW_SIZE as i32)).unwrap();
             canvas.draw_line((0, x), (WINDOW_SIZE as i32, x)).unwrap();
         }
@@ -71,5 +74,3 @@ pub fn main() {
         ::std::thread::sleep(FRAME_DURATION);
     }
 }
-
-
