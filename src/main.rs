@@ -1,25 +1,33 @@
-mod square;
 mod constants;
+mod square;
 
 use constants::*;
-use square::Square;
-use square::*;
-use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use sdl2::pixels::Color;
+use square::Square;
+use square::*;
 use std::time::Instant;
 
 pub fn main() {
     let sdl_context = sdl2::init().expect("Failed to initialize SDL2");
-    let video_subsystem = sdl_context.video().expect("Failed to get SDL2 video subsystem");
+    let video_subsystem = sdl_context
+        .video()
+        .expect("Failed to get SDL2 video subsystem");
 
-    let window = video_subsystem.window("Smart Road", WINDOW_SIZE, WINDOW_SIZE)
+    let window = video_subsystem
+        .window("Smart Road", WINDOW_SIZE, WINDOW_SIZE)
         .position_centered()
         .build()
         .expect("Failed to create window");
 
-    let mut canvas = window.into_canvas().build().expect("Failed to create canvas");
-    let mut event_pump = sdl_context.event_pump().expect("Failed to get SDL2 event pump");
+    let mut canvas = window
+        .into_canvas()
+        .build()
+        .expect("Failed to create canvas");
+    let mut event_pump = sdl_context
+        .event_pump()
+        .expect("Failed to get SDL2 event pump");
 
     let mut squares: Vec<Square> = vec![];
     square::spawn_squares(&mut squares);
@@ -29,10 +37,13 @@ pub fn main() {
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit {..} |
-                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                Event::Quit { .. }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => {
                     break 'running;
-                },
+                }
                 _ => {}
             }
         }
@@ -51,9 +62,9 @@ pub fn main() {
         for i in 4..=10 {
             let x = i * LINE_SPACING;
             if i == 7 {
-            canvas.set_draw_color(Color::RGB(0, 255, 0)); // Green color for the 4th line
+                canvas.set_draw_color(Color::RGB(0, 255, 0)); // Green color for the 4th line
             } else {
-            canvas.set_draw_color(Color::RGB(255, 255, 255)); // White color for other lines
+                canvas.set_draw_color(Color::RGB(255, 255, 255)); // White color for other lines
             }
             canvas.draw_line((x, 0), (x, WINDOW_SIZE as i32)).unwrap();
             canvas.draw_line((0, x), (WINDOW_SIZE as i32, x)).unwrap();
