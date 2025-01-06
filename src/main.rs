@@ -76,12 +76,19 @@ pub fn main() {
         squares.retain(|square| square.is_in_bounds(WINDOW_SIZE));
 
         canvas.present();
-        ::std::thread::sleep(FRAME_DURATION);
+        std::thread::sleep(FRAME_DURATION);
     }
 }
 
 // Function to draw the lines once
 fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
+    // the x point to stop at (before intersection)
+    let before_intersection: i32 = 4 * LINE_SPACING;
+    let after_intersection: i32 = 10 * LINE_SPACING;
+
+    // the y point to stop at (before intersection)
+    // let y_before_intersection: i32 = 
+
     for i in 4..=10 {
         let x = i * LINE_SPACING;
         if i == 7 {
@@ -89,7 +96,23 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
         } else {
             canvas.set_draw_color(Color::RGB(255, 255, 255)); // White color for other lines
         }
-        canvas.draw_line((x, 0), (x, WINDOW_SIZE as i32)).unwrap();
-        canvas.draw_line((0, x), (WINDOW_SIZE as i32, x)).unwrap();
+
+        if i == 7 {
+            // vertical line
+            canvas.draw_line((x, 0), (x, WINDOW_SIZE as i32)).unwrap();
+            // horizontal line
+            canvas.draw_line((0, x), (WINDOW_SIZE as i32, x)).unwrap();
+        } else {
+            // vertical line before intersection
+            canvas.draw_line((x, 0), (x, before_intersection)).unwrap();
+            // vertical line after intersection
+            canvas.draw_line((x, after_intersection), (x, WINDOW_SIZE as i32)).unwrap();
+
+            // horizontal line before intersection
+            canvas.draw_line((0, x), (before_intersection, x)).unwrap();
+            // horizontal line after intersection
+            canvas.draw_line((after_intersection, x), (WINDOW_SIZE as i32, x)).unwrap();
+            
+        }
     }
 }
