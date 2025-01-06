@@ -22,6 +22,40 @@ pub struct Square {
     turn_y: Option<i32>,
 }
 
+
+impl Direction {
+    pub fn new(exclude: Option<Direction>) -> Direction {
+        let mut rng = rand::thread_rng();
+        loop {
+            let new_direction = match rng.gen_range(0..4) {
+                0 => Direction::Up,
+                1 => Direction::Left,
+                2 => Direction::Down,
+                3 => Direction::Right,
+                _ => unreachable!(),
+            };
+
+            if let Some(exclude_dir) = exclude {
+                if new_direction != exclude_dir {
+                    return new_direction;
+                }
+            } else {
+                return new_direction;
+            }
+        }
+    }
+    
+    pub fn opposite(&self) -> Direction {
+        match self {
+            Direction::Up => Direction::Down,
+            Direction::Down => Direction::Up,
+            Direction::Left => Direction::Right,
+            Direction::Right => Direction::Left,
+        }
+    }
+}
+
+
 impl Square {
     pub fn new(x: i32, y: i32, initial_position: Direction, target_direction: Direction, size: u32) -> Self {
         let mut rng = rand::thread_rng();
@@ -52,6 +86,7 @@ impl Square {
 
         Square { rect, color, initial_position, target_direction, current_direction, turn_x, turn_y }
     }
+
     pub fn update(&mut self) {
         match self.current_direction {
             Direction::Down => self.rect.set_y(self.rect.y() + 2),
@@ -99,35 +134,4 @@ pub fn spawn_squares(squares: &mut Vec<Square>) {
     };
 
     squares.push(Square::new(x, y, initial_position, _target_direction, SQUARE_SIZE));
-}
-
-impl Direction {
-    pub fn new(exclude: Option<Direction>) -> Direction {
-        let mut rng = rand::thread_rng();
-        loop {
-            let new_direction = match rng.gen_range(0..4) {
-                0 => Direction::Up,
-                1 => Direction::Left,
-                2 => Direction::Down,
-                3 => Direction::Right,
-                _ => unreachable!(),
-            };
-
-            if let Some(exclude_dir) = exclude {
-                if new_direction != exclude_dir {
-                    return new_direction;
-                }
-            } else {
-                return new_direction;
-            }
-        }
-    }
-    pub fn opposite(&self) -> Direction {
-        match self {
-            Direction::Up => Direction::Down,
-            Direction::Down => Direction::Up,
-            Direction::Left => Direction::Right,
-            Direction::Right => Direction::Left,
-        }
-    }
 }
