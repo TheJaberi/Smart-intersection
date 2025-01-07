@@ -1,12 +1,11 @@
 mod constants;
+mod image;
 mod square;
-
 use constants::*;
+use image::draw_image;
 use sdl2::event::Event;
-use sdl2::image::LoadTexture;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::rect::Rect;
 use square::Square;
 use square::*;
 use std::time::Instant;
@@ -85,11 +84,14 @@ pub fn main() {
 
 // Function to draw the lines once
 fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
-    let texture_creator = canvas.texture_creator();
-    let texture = texture_creator.load_texture("assets/arrow.up.png").unwrap();
-
-    let target = Rect::new(200, 150, 50, 50);
-    canvas.copy(&texture, None, Some(target)).unwrap();
+    draw_image(
+        canvas,
+        200 + LINE_SPACING / 2,
+        150,
+        LINE_SPACING as u32,
+        LINE_SPACING as u32,
+        "assets/arrow.up.png",
+    );
 
     // the x point to stop at (before intersection)
     let before_intersection: i32 = 4 * LINE_SPACING; // eman approved nadeer is Supercalifragilisticexpialidocious
