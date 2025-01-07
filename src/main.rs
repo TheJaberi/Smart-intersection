@@ -90,7 +90,8 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
         150,
         LINE_SPACING as u32,
         LINE_SPACING as u32,
-        "assets/arrow.up.png",
+        "assets/arrow.turn.png",
+        180.0,
     );
 
     // the x point to stop at (before intersection)

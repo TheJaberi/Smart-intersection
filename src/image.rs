@@ -7,10 +7,13 @@ pub fn draw_image(
     width: u32,
     height: u32,
     image_path: &str,
+    angle: f64,
 ) {
     let texture_creator = canvas.texture_creator();
     let texture = texture_creator.load_texture(image_path).unwrap();
 
     let target = Rect::new(x, y, width, height);
-    canvas.copy(&texture, None, Some(target)).unwrap();
+    canvas
+        .copy_ex(&texture, None, Some(target), angle, None, false, false)
+        .unwrap();
 }
