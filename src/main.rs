@@ -84,29 +84,19 @@ pub fn main() {
 
 // Function to draw the lines once
 fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
-    draw_image(
-        canvas,
-        200 + LINE_SPACING / 2,
-        150,
-        LINE_SPACING as u32,
-        LINE_SPACING as u32,
-        "assets/arrow.turn.png",
-        180.0,
-    );
-
     // the x point to stop at (before intersection)
     let before_intersection: i32 = 4 * LINE_SPACING; // eman approved nadeer is Supercalifragilisticexpialidocious
     let after_intersection: i32 = 10 * LINE_SPACING;
 
-    for i in 4..=10 {
-        let x = i * LINE_SPACING;
-        if i == 4 || i == 10 || i == 7 {
+    for line in 4..=10 {
+        let x = line * LINE_SPACING;
+        if line == 4 || line == 10 || line == 7 {
             canvas.set_draw_color(Color::RGB(255, 255, 255)); // White color for the first, middle, and last lines
         } else {
             canvas.set_draw_color(Color::RGB(128, 128, 128)); // Gray color for other lines
         }
 
-        if i == 7 {
+        if line == 7 {
             // vertical line
             canvas.draw_line((x, 0), (x, WINDOW_SIZE as i32)).unwrap();
             // horizontal line
@@ -125,6 +115,135 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
             canvas
                 .draw_line((after_intersection, x), (WINDOW_SIZE as i32, x))
                 .unwrap();
+        }
+
+        if line == 4 {
+            draw_image(
+                canvas,
+                x,
+                before_intersection - LINE_SPACING,
+                LINE_SPACING as u32,
+                LINE_SPACING as u32,
+                "assets/arrow.turn.png",
+                180.0,
+            );
+            draw_image(
+                canvas,
+                after_intersection,
+                x,
+                LINE_SPACING as u32,
+                LINE_SPACING as u32,
+                "assets/arrow.turn.png",
+                270.0,
+            );
+        }
+
+        if line == 5 {
+            draw_image(
+                canvas,
+                x,
+                before_intersection - LINE_SPACING,
+                LINE_SPACING as u32,
+                LINE_SPACING as u32,
+                "assets/arrow.up.png",
+                180.0,
+            );
+            draw_image(
+                canvas,
+                after_intersection,
+                x,
+                LINE_SPACING as u32,
+                LINE_SPACING as u32,
+                "assets/arrow.up.png",
+                270.0,
+            );
+        }
+
+        if line == 6 {
+            draw_image(
+                canvas,
+                x,
+                before_intersection - LINE_SPACING,
+                LINE_SPACING as u32,
+                LINE_SPACING as u32,
+                "assets/arrow.turn.left.png",
+                180.0,
+            );
+            draw_image(
+                canvas,
+                after_intersection,
+                x,
+                LINE_SPACING as u32,
+                LINE_SPACING as u32,
+                "assets/arrow.turn.left.png",
+                270.0,
+            );
+        }
+
+        if line == 7 {
+            draw_image(
+                canvas,
+                before_intersection - LINE_SPACING,
+                x,
+                LINE_SPACING as u32,
+                LINE_SPACING as u32,
+                "assets/arrow.turn.left.png",
+                90.0,
+            );
+
+            draw_image(
+                canvas,
+                x,
+                after_intersection,
+                LINE_SPACING as u32,
+                LINE_SPACING as u32,
+                "assets/arrow.turn.left.png",
+                0.0,
+            );
+        }
+
+        if line == 8 {
+            draw_image(
+                canvas,
+                before_intersection - LINE_SPACING,
+                x,
+                LINE_SPACING as u32,
+                LINE_SPACING as u32,
+                "assets/arrow.up.png",
+                90.0,
+            );
+
+            draw_image(
+                canvas,
+                x,
+                after_intersection,
+                LINE_SPACING as u32,
+                LINE_SPACING as u32,
+                "assets/arrow.up.png",
+                0.0,
+            );
+        }
+
+        if line == 9 {
+            draw_image(
+                canvas,
+                before_intersection - LINE_SPACING,
+                x,
+                LINE_SPACING as u32,
+                LINE_SPACING as u32,
+                "assets/arrow.turn.png",
+                90.0,
+            );
+
+            draw_image(
+                canvas,
+                x,
+                after_intersection,
+                LINE_SPACING as u32,
+                LINE_SPACING as u32,
+                "assets/arrow.turn.png",
+                0.0,
+            );
         }
     }
 }
