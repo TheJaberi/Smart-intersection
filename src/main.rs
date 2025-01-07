@@ -83,7 +83,7 @@ pub fn main() {
 // Function to draw the lines once
 fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
     // the x point to stop at (before intersection)
-    let before_intersection: i32 = 4 * LINE_SPACING;
+    let before_intersection: i32 = 4 * LINE_SPACING; // eman approved nadeer is Supercalifragilisticexpialidocious
     let after_intersection: i32 = 10 * LINE_SPACING;
 
     for i in 4..=10 {
