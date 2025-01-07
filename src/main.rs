@@ -3,8 +3,10 @@ mod square;
 
 use constants::*;
 use sdl2::event::Event;
+use sdl2::image::LoadTexture;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
+use sdl2::rect::Rect;
 use square::Square;
 use square::*;
 use std::time::Instant;
@@ -25,6 +27,7 @@ pub fn main() {
         .into_canvas()
         .build()
         .expect("Failed to create canvas");
+
     let mut event_pump = sdl_context
         .event_pump()
         .expect("Failed to get SDL2 event pump");
@@ -82,6 +85,12 @@ pub fn main() {
 
 // Function to draw the lines once
 fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
+    let texture_creator = canvas.texture_creator();
+    let texture = texture_creator.load_texture("assets/arrow.up.png").unwrap();
+
+    let target = Rect::new(200, 150, 50, 50);
+    canvas.copy(&texture, None, Some(target)).unwrap();
+
     // the x point to stop at (before intersection)
     let before_intersection: i32 = 4 * LINE_SPACING; // eman approved nadeer is Supercalifragilisticexpialidocious
     let after_intersection: i32 = 10 * LINE_SPACING;
@@ -103,12 +112,16 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
             // vertical line before intersection
             canvas.draw_line((x, 0), (x, before_intersection)).unwrap();
             // vertical line after intersection
-            canvas.draw_line((x, after_intersection), (x, WINDOW_SIZE as i32)).unwrap();
+            canvas
+                .draw_line((x, after_intersection), (x, WINDOW_SIZE as i32))
+                .unwrap();
 
             // horizontal line before intersection
             canvas.draw_line((0, x), (before_intersection, x)).unwrap();
             // horizontal line after intersection
-            canvas.draw_line((after_intersection, x), (WINDOW_SIZE as i32, x)).unwrap();
+            canvas
+                .draw_line((after_intersection, x), (WINDOW_SIZE as i32, x))
+                .unwrap();
         }
     }
 }
