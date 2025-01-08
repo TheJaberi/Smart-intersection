@@ -133,11 +133,11 @@ impl Square {
     }
 }
 
-pub fn spawn_squares(squares: &mut Vec<Square>) {
-    let initial_position = Direction::new(None);
-    let target_direction = Direction::new(Some(initial_position));
+pub fn spawn_square(squares: &mut Vec<Square>) {
+    let initial_direction = Direction::new(None);
+    let target_direction = Direction::new(Some(initial_direction));
 
-    let (x, y) = match initial_position {
+    let (x, y) = match initial_direction {
         Direction::Up => (4 * LINE_SPACING, -LINE_SPACING),
         Direction::Left => (-LINE_SPACING, 5 * LINE_SPACING),
         Direction::Down => (5 * LINE_SPACING, WINDOW_SIZE as i32),
@@ -147,7 +147,7 @@ pub fn spawn_squares(squares: &mut Vec<Square>) {
     squares.push(Square::new(
         x,
         y,
-        initial_position,
+        initial_direction,
         target_direction,
         SQUARE_SIZE,
     ));

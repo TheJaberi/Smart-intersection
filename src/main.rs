@@ -32,7 +32,7 @@ pub fn main() {
         .expect("Failed to get SDL2 event pump");
 
     let mut squares: Vec<Square> = vec![];
-    square::spawn_squares(&mut squares);
+    square::spawn_square(&mut squares);
 
     let mut last_square_spawn = Instant::now();
 
@@ -55,7 +55,7 @@ pub fn main() {
 
         // Add a new square every 5 seconds
         if last_square_spawn.elapsed() >= SQUARE_SPAWN_INTERVAL {
-            spawn_squares(&mut squares);
+            spawn_square(&mut squares);
             last_square_spawn = Instant::now();
         }
 
