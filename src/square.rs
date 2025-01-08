@@ -15,7 +15,7 @@ pub enum Direction {
 pub struct Square {
     pub rect: Rect,
     pub color: Color,
-    pub initial_position: Direction,
+    pub initial_direction: Direction,
     pub target_direction: Direction,
     current_direction: Direction,
     turn_x: Option<i32>,
@@ -90,7 +90,7 @@ impl Square {
         Square {
             rect,
             color,
-            initial_position,
+            initial_direction: initial_position,
             target_direction,
             current_direction,
             turn_x,
@@ -135,7 +135,7 @@ impl Square {
 
 pub fn spawn_square(squares: &mut Vec<Square>) {
     let initial_direction = Direction::new(None);
-    let target_direction = Direction::new(Some(initial_direction));
+    let target_direction: Direction = Direction::new(Some(initial_direction));
 
     let (x, y) = match initial_direction {
         Direction::Up => (4 * LINE_SPACING, -LINE_SPACING),
