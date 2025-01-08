@@ -116,8 +116,19 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
                 .draw_line((after_intersection, x), (WINDOW_SIZE as i32, x))
                 .unwrap();
         }
+        draw_arrows(canvas, line, x, before_intersection, after_intersection);
+    }
+}
 
-        if line == 4 {
+fn draw_arrows(
+    canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
+    line: i32,
+    x: i32,
+    before_intersection: i32,
+    after_intersection: i32,
+) {
+    match line {
+        4 => {
             draw_image(
                 canvas,
                 x,
@@ -137,8 +148,7 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
                 270.0,
             );
         }
-
-        if line == 5 {
+        5 => {
             draw_image(
                 canvas,
                 x,
@@ -158,8 +168,7 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
                 270.0,
             );
         }
-
-        if line == 6 {
+        6 => {
             draw_image(
                 canvas,
                 x,
@@ -179,8 +188,7 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
                 270.0,
             );
         }
-
-        if line == 7 {
+        7 => {
             draw_image(
                 canvas,
                 before_intersection - LINE_SPACING,
@@ -190,7 +198,6 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
                 "assets/arrow.turn.left.png",
                 90.0,
             );
-
             draw_image(
                 canvas,
                 x,
@@ -201,8 +208,7 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
                 0.0,
             );
         }
-
-        if line == 8 {
+        8 => {
             draw_image(
                 canvas,
                 before_intersection - LINE_SPACING,
@@ -212,7 +218,6 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
                 "assets/arrow.up.png",
                 90.0,
             );
-
             draw_image(
                 canvas,
                 x,
@@ -223,8 +228,7 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
                 0.0,
             );
         }
-
-        if line == 9 {
+        9 => {
             draw_image(
                 canvas,
                 before_intersection - LINE_SPACING,
@@ -234,7 +238,6 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
                 "assets/arrow.turn.png",
                 90.0,
             );
-
             draw_image(
                 canvas,
                 x,
@@ -245,5 +248,6 @@ fn draw_lines(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
                 0.0,
             );
         }
+        _ => {}
     }
 }
