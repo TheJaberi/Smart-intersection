@@ -1,15 +1,8 @@
 use crate::constants::*;
+use crate::direction::Direction;
 use rand::Rng;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
 
 #[derive(PartialEq)]
 pub struct Square {
@@ -20,38 +13,6 @@ pub struct Square {
     current_direction: Direction,
     turn_x: Option<i32>,
     turn_y: Option<i32>,
-}
-
-impl Direction {
-    pub fn new(exclude: Option<Direction>) -> Direction {
-        let mut rng = rand::thread_rng();
-        loop {
-            let new_direction = match rng.gen_range(0..4) {
-                0 => Direction::Up,
-                1 => Direction::Left,
-                2 => Direction::Down,
-                3 => Direction::Right,
-                _ => unreachable!(),
-            };
-
-            if let Some(exclude_dir) = exclude {
-                if new_direction != exclude_dir {
-                    return new_direction;
-                }
-            } else {
-                return new_direction;
-            }
-        }
-    }
-
-    pub fn opposite(&self) -> Direction {
-        match self {
-            Direction::Up => Direction::Down,
-            Direction::Down => Direction::Up,
-            Direction::Left => Direction::Right,
-            Direction::Right => Direction::Left,
-        }
-    }
 }
 
 impl Square {

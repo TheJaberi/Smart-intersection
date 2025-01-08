@@ -1,4 +1,5 @@
 mod constants;
+mod direction;
 mod image;
 mod square;
 use constants::*;
@@ -6,8 +7,7 @@ use image::draw_image;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use square::Square;
-use square::*;
+use square::{spawn_square, Square};
 use std::time::Instant;
 
 pub fn main() {
