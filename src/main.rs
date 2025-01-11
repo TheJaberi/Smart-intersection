@@ -39,6 +39,7 @@ pub fn main() {
     // Draw the lines once at the start
     draw_lines(&mut canvas);
 
+    let mut game_over = false;
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -47,38 +48,79 @@ pub fn main() {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => {
+                    game_over = true;
                     break 'running;
                 }
                 _ => {}
             }
         }
 
-        // Add a new square every 5 seconds
-        if last_square_spawn.elapsed() >= SQUARE_SPAWN_INTERVAL {
-            spawn_square(&mut squares);
-            last_square_spawn = Instant::now();
+        if game_over {
+            break 'running;
         }
 
-        // background
-        canvas.set_draw_color(Color::RGB(0, 0, 0));
-        canvas.clear();
+        // Collision check: Look for collisions between squares
+        for i in 0..squares.len() {
+            for j in (i + 1)..squares.len() {
+                let mut is_car_near = false;
+                // check if cars are too close
+                if squares[i].is_near(&squares[j], 2 * LINE_SPACING) {
+                    println!(
+                        "Cars are too close between car {} and car {}: {:?} and {:?}",
+                        i, j, squares[i].rect, squares[j].rect
+                    );
+                }
 
-        // Draw the lines every frame
-        draw_lines(&mut canvas);
+                if is_car_near {
+                    squares[i].velocity = (squares[i].velocity - 1).max(1);
+                } else {
+                    squares[i].velocity = (squares[i].velocity + 1).min(5);
+                }
 
-        // square
-        // Draw and update squares
-        for square in &mut squares {
-            canvas.set_draw_color(square.color);
-            canvas.fill_rect(square.rect).unwrap();
-            square.update();
+                squares[i].update();
+
+                print!("Car {} velocity: {}\n", i, squares[i].velocity);
+
+                // check if cars collide
+                if squares[i].has_collision(&squares[j]) {
+                    println!(
+                        "Collision detected between car {} and car {}: {:?} and {:?}",
+                        i, j, squares[i].rect, squares[j].rect
+                    );
+                }
+            }
+
+            if game_over {
+                break;
+            }
+
+            // Add a new square every 5 seconds
+            if last_square_spawn.elapsed() >= SQUARE_SPAWN_INTERVAL {
+                spawn_square(&mut squares);
+                last_square_spawn = Instant::now();
+            }
+
+            // background
+            canvas.set_draw_color(Color::RGB(80, 80, 80));
+            canvas.clear();
+
+            // Draw the lines every frame
+            draw_lines(&mut canvas);
+
+            // square
+            // Draw and update squares
+            for square in &mut squares {
+                canvas.set_draw_color(square.color);
+                canvas.fill_rect(square.rect).unwrap();
+                square.update();
+            }
+
+            // Remove out-of-bounds squares
+            squares.retain(|square| square.is_in_bounds(WINDOW_SIZE));
+
+            canvas.present();
+            std::thread::sleep(FRAME_DURATION);
         }
-
-        // Remove out-of-bounds squares
-        squares.retain(|square| square.is_in_bounds(WINDOW_SIZE));
-
-        canvas.present();
-        std::thread::sleep(FRAME_DURATION);
     }
 }
 

@@ -13,6 +13,7 @@ pub struct Square {
     current_direction: Direction,
     turn_x: Option<i32>,
     turn_y: Option<i32>,
+    pub velocity: i32, // to control the speed
 }
 
 #[derive(Debug)]
@@ -32,6 +33,7 @@ impl Square {
         size: u32,
         turn_x: Option<i32>,
         turn_y: Option<i32>,
+        velocity: i32,
     ) -> Self {
         let mut rng = rand::thread_rng();
         let color = Color::RGB(
@@ -50,16 +52,17 @@ impl Square {
             current_direction: initial_direction.opposite(),
             turn_x,
             turn_y,
+            velocity,
         }
     }
 
     pub fn update(&mut self) {
         // TODO: if more than one the `turn_to_target_direction` could break
         match self.current_direction {
-            Direction::Down => self.rect.set_y(self.rect.y() + 1),
-            Direction::Up => self.rect.set_y(self.rect.y() - 1),
-            Direction::Left => self.rect.set_x(self.rect.x() - 1),
-            Direction::Right => self.rect.set_x(self.rect.x() + 1),
+            Direction::Down => self.rect.set_y(self.rect.y() + self.velocity),
+            Direction::Up => self.rect.set_y(self.rect.y() - self.velocity),
+            Direction::Left => self.rect.set_x(self.rect.x() - self.velocity),
+            Direction::Right => self.rect.set_x(self.rect.x() + self.velocity),
         }
 
         self.turn_to_target_direction();
@@ -75,17 +78,45 @@ impl Square {
     }
 
     fn turn_to_target_direction(&mut self) {
+        // If the car is supposed to turn at a specific x-coordinate
         if let Some(turn_x) = self.turn_x {
-            if self.current_direction != self.target_direction && self.rect.x() == turn_x {
+            if (self.current_direction == Direction::Left && self.rect.x() <= turn_x)
+                || (self.current_direction == Direction::Right && self.rect.x() >= turn_x)
+            {
+                self.rect.set_x(turn_x); // Snap to exact position
                 self.current_direction = self.target_direction;
+                self.turn_x = None; // Clear the turn position after turning
             }
         }
-
+    
+        // If the car is supposed to turn at a specific y-coordinate
         if let Some(turn_y) = self.turn_y {
-            if self.current_direction != self.target_direction && self.rect.y() == turn_y {
+            if (self.current_direction == Direction::Up && self.rect.y() <= turn_y)
+                || (self.current_direction == Direction::Down && self.rect.y() >= turn_y)
+            {
+                self.rect.set_y(turn_y); // Snap to exact position
                 self.current_direction = self.target_direction;
+                self.turn_y = None; // Clear the turn position after turning
             }
         }
+    }
+    
+    pub fn has_collision(&self, other: &Square) -> bool {
+        self.rect.has_intersection(other.rect)
+    }
+
+    pub fn is_near(&self, other: &Square, distance: i32) -> bool {
+        // Calculate the centers of both squares
+        let center_self_x = self.rect.x() + self.rect.width() as i32 / 2;
+        let center_self_y = self.rect.y() + self.rect.height() as i32 / 2;
+        let center_other_x = other.rect.x() + other.rect.width() as i32 / 2;
+        let center_other_y = other.rect.y() + other.rect.height() as i32 / 2;
+        // Calculate the distance between the centers
+        let dx = center_self_x - center_other_x;
+        let dy = center_self_y - center_other_y;
+        let distance_near = (((dx.pow(2) + dy.pow(2)) as f64).sqrt()) as i32;
+
+        distance_near <= distance
     }
 }
 
@@ -95,6 +126,10 @@ pub fn spawn_square(squares: &mut Vec<Square>) {
 
     let calculated_coordinates = calculate_coordinates(initial_direction, target_direction);
 
+    let velocity = 1;
+    // let mut rng = rand::thread_rng();
+    // let velocity = rng.gen_range(1..=5);
+
     squares.push(Square::new(
         calculated_coordinates.starting_x,
         calculated_coordinates.starting_y,
@@ -103,6 +138,7 @@ pub fn spawn_square(squares: &mut Vec<Square>) {
         SQUARE_SIZE,
         calculated_coordinates.turn_x,
         calculated_coordinates.turn_y,
+        velocity,
     ));
 }
 
