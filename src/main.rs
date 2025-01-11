@@ -89,18 +89,54 @@ pub fn main() {
         if game_over {
             break 'running;
         }
-
+        const INTERSECTION_X: i32 = 400; 
+        const INTERSECTION_Y: i32 = 400; 
         // Collision check: Look for collisions between squares
         for i in 0..squares.len() {
+            let mut is_car_near = false;
+            let mut can_move = true;
+            
             for j in (i + 1)..squares.len() {
-                let mut is_car_near = false;
+                
+                if i != j {
+                               // Compare distances to the intersection
+            let distance_i = squares[i].distance_to_intersection(INTERSECTION_X, INTERSECTION_Y);
+            let distance_j = squares[j].distance_to_intersection(INTERSECTION_X, INTERSECTION_Y); 
+                
+
+                if distance_j < distance_i || (distance_j == distance_i && squares[j].priority() < squares[i].priority()) {
+                    can_move = false;
+                    println!(
+                        "Car {} must wait for car {}: Priority {} vs {}",
+                        i, j, squares[i].priority(), squares[j].priority()
+                    );
+                    break;
+                }
+            }
+
+                if can_move {
+                    // Move the car normally
+                    squares[i].update();
+                    println!(
+                        "Car {} is moving: Position {:?}, Velocity {}",
+                        i, squares[i].rect, squares[i].velocity
+                    );
+                } else {
+                    // Slow down or stop the car
+                    squares[i].velocity = (squares[i].velocity - 1).max(0);
+                }
+
+
+
                 // check if cars are too close
-                if squares[i].is_near(&squares[j], 2 * LINE_SPACING) {
+                if i != j && squares[i].is_near(&squares[j], 50) {
+                    is_car_near = true;
                     println!(
                         "Cars are too close between car {} and car {}: {:?} and {:?}",
                         i, j, squares[i].rect, squares[j].rect
                     );
                 }
+                
 
                 if is_car_near {
                     squares[i].velocity = (squares[i].velocity - 1).max(1);

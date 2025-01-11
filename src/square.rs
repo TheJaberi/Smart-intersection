@@ -56,6 +56,22 @@ impl Square {
         }
     }
 
+    pub fn priority(&self) -> i32 {
+        match self.current_direction {
+            Direction::Right => 1,
+            Direction::Up => 2,
+            Direction::Left => 3,
+            Direction::Down => 4,
+        }
+    }
+
+    pub fn distance_to_intersection(&self, intersection_x: i32, intersection_y: i32) -> i32 {
+        // Calculate the distance to the intersection center
+        let dx = (self.rect.x() - intersection_x).abs();
+        let dy = (self.rect.y() - intersection_y).abs();
+        dx + dy
+    }
+
     pub fn update(&mut self) {
         // TODO: if more than one the `turn_to_target_direction` could break
         match self.current_direction {
@@ -106,16 +122,19 @@ impl Square {
     }
 
     pub fn is_near(&self, other: &Square, distance: i32) -> bool {
+
         // Calculate the centers of both squares
         let center_self_x = self.rect.x() + self.rect.width() as i32 / 2;
         let center_self_y = self.rect.y() + self.rect.height() as i32 / 2;
         let center_other_x = other.rect.x() + other.rect.width() as i32 / 2;
         let center_other_y = other.rect.y() + other.rect.height() as i32 / 2;
+
         // Calculate the distance between the centers
         let dx = center_self_x - center_other_x;
         let dy = center_self_y - center_other_y;
         let distance_near = (((dx.pow(2) + dy.pow(2)) as f64).sqrt()) as i32;
 
+        // Return true if the distance between cars is less than or equal to the specified safe distance
         distance_near <= distance
     }
 }
