@@ -86,7 +86,6 @@ pub fn main() {
                 _ => {}
             }
         }
-
         if game_over {
             break 'running;
         }
@@ -121,38 +120,38 @@ pub fn main() {
                     );
                 }
             }
-
-            if game_over {
-                break;
-            }
-
-            // Add a new square every 5 seconds
-            if is_random_generation && last_square_spawn.elapsed() >= SQUARE_SPAWN_INTERVAL {
-                spawn_random_square(&mut squares);
-                last_square_spawn = Instant::now();
-            }
-
-            // background
-            canvas.set_draw_color(Color::RGB(80, 80, 80));
-            canvas.clear();
-
-            // Draw the lines every frame
-            draw_lines(&mut canvas);
-
-            // square
-            // Draw and update squares
-            for square in &mut squares {
-                canvas.set_draw_color(square.color);
-                canvas.fill_rect(square.rect).unwrap();
-                square.update();
-            }
-
-            // Remove out-of-bounds squares
-            squares.retain(|square| square.is_in_bounds(WINDOW_SIZE));
-
-            canvas.present();
-            std::thread::sleep(FRAME_DURATION);
         }
+
+        if game_over {
+            break;
+        }
+
+        // Add a new square every 5 seconds
+        if is_random_generation && last_square_spawn.elapsed() >= SQUARE_SPAWN_INTERVAL {
+            spawn_random_square(&mut squares);
+            last_square_spawn = Instant::now();
+        }
+
+        // background
+        canvas.set_draw_color(Color::RGB(0, 0, 0));
+        canvas.clear();
+
+        // Draw the lines every frame
+        draw_lines(&mut canvas);
+
+        // square
+        // Draw and update squares
+        for square in &mut squares {
+            canvas.set_draw_color(square.color);
+            canvas.fill_rect(square.rect).unwrap();
+            square.update();
+        }
+
+        // Remove out-of-bounds squares
+        squares.retain(|square| square.is_in_bounds(WINDOW_SIZE));
+
+        canvas.present();
+        std::thread::sleep(FRAME_DURATION);
     }
 }
 
