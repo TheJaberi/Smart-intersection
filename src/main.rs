@@ -3,11 +3,12 @@ mod direction;
 mod image;
 mod square;
 use constants::*;
+use direction::Direction;
 use image::draw_image;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use square::{spawn_square, Square};
+use square::{spawn_random_square, spawn_square_with_direction, Square};
 use std::time::Instant;
 
 pub fn main() {
@@ -32,9 +33,9 @@ pub fn main() {
         .expect("Failed to get SDL2 event pump");
 
     let mut squares: Vec<Square> = vec![];
-    square::spawn_square(&mut squares);
 
     let mut last_square_spawn = Instant::now();
+    let mut is_random_generation = false;
 
     // Draw the lines once at the start
     draw_lines(&mut canvas);
@@ -50,6 +51,37 @@ pub fn main() {
                 } => {
                     game_over = true;
                     break 'running;
+                }
+                // Vehicle Controls
+                Event::KeyDown {
+                    keycode: Some(Keycode::Up),
+                    ..
+                } => {
+                    spawn_square_with_direction(&mut squares, Direction::Down, Direction::Up);
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Down),
+                    ..
+                } => {
+                    spawn_square_with_direction(&mut squares, Direction::Up, Direction::Down);
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Left),
+                    ..
+                } => {
+                    spawn_square_with_direction(&mut squares, Direction::Right, Direction::Left);
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Right),
+                    ..
+                } => {
+                    spawn_square_with_direction(&mut squares, Direction::Left, Direction::Right);
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::R),
+                    ..
+                } => {
+                    is_random_generation = !is_random_generation;
                 }
                 _ => {}
             }
@@ -95,8 +127,8 @@ pub fn main() {
             }
 
             // Add a new square every 5 seconds
-            if last_square_spawn.elapsed() >= SQUARE_SPAWN_INTERVAL {
-                spawn_square(&mut squares);
+            if is_random_generation && last_square_spawn.elapsed() >= SQUARE_SPAWN_INTERVAL {
+                spawn_random_square(&mut squares);
                 last_square_spawn = Instant::now();
             }
 

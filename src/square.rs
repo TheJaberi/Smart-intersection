@@ -120,10 +120,17 @@ impl Square {
     }
 }
 
-pub fn spawn_square(squares: &mut Vec<Square>) {
+pub fn spawn_random_square(squares: &mut Vec<Square>) {
     let initial_direction = Direction::new(None);
-    let target_direction: Direction = Direction::new(Some(initial_direction));
+    let target_direction = Direction::new(Some(initial_direction));
+    spawn_square_with_direction(squares, initial_direction, target_direction);
+}
 
+pub fn spawn_square_with_direction(
+    squares: &mut Vec<Square>,
+    initial_direction: Direction,
+    target_direction: Direction,
+) {
     let calculated_coordinates = calculate_coordinates(initial_direction, target_direction);
 
     let velocity = 1;
