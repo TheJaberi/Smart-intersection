@@ -35,6 +35,15 @@ pub fn main() {
         .event_pump()
         .expect("Failed to get SDL2 event pump");
 
+    render_simulation(&mut canvas, &mut event_pump);
+
+    render_metrics(&mut canvas, &mut event_pump, &ttf_context);
+}
+
+fn render_simulation(
+    mut canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
+    event_pump: &mut sdl2::EventPump,
+) {
     let mut squares: Vec<Square> = vec![];
 
     let mut last_square_spawn = Instant::now();
@@ -211,7 +220,13 @@ pub fn main() {
         canvas.present();
         std::thread::sleep(FRAME_DURATION);
     }
+}
 
+fn render_metrics(
+    mut canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
+    event_pump: &mut sdl2::EventPump,
+    ttf_context: &sdl2::ttf::Sdl2TtfContext,
+) {
     // Game over text
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
