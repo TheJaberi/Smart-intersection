@@ -2,6 +2,7 @@ mod constants;
 mod direction;
 mod image;
 mod square;
+mod text;
 use constants::*;
 use direction::Direction;
 use image::draw_image;
@@ -10,12 +11,14 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use square::{spawn_random_square, spawn_square_with_direction, Square};
 use std::time::Instant;
+use text::draw_text;
 
 pub fn main() {
     let sdl_context = sdl2::init().expect("Failed to initialize SDL2");
     let video_subsystem = sdl_context
         .video()
         .expect("Failed to get SDL2 video subsystem");
+    let ttf_context = sdl2::ttf::init().expect("Failed to initialize SDL2 TTF");
 
     let window = video_subsystem
         .window("Smart Road", WINDOW_SIZE, WINDOW_SIZE)
@@ -41,7 +44,7 @@ pub fn main() {
     draw_lines(&mut canvas);
 
     let mut game_over = false;
-    'running: loop {
+    'simulation_loop: loop {
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
@@ -50,7 +53,7 @@ pub fn main() {
                     ..
                 } => {
                     game_over = true;
-                    break 'running;
+                    break 'simulation_loop;
                 }
 
                 _ => {}
@@ -110,7 +113,7 @@ pub fn main() {
         }
 
         if game_over {
-            break 'running;
+            break 'simulation_loop;
         }
         const INTERSECTION_X: i32 = 400;
         const INTERSECTION_Y: i32 = 400;
@@ -205,9 +208,41 @@ pub fn main() {
 
         // Remove out-of-bounds squares
         squares.retain(|square| square.is_in_bounds(WINDOW_SIZE));
-
         canvas.present();
         std::thread::sleep(FRAME_DURATION);
+    }
+
+    // Game over text
+    canvas.set_draw_color(Color::RGB(0, 0, 0));
+    canvas.clear();
+    draw_text(
+        &canvas.texture_creator(),
+        "assets/Roboto-Regular.ttf",
+        48,
+        "Simulation Over",
+        Color::RGB(255, 255, 255),
+        WINDOW_SIZE as i32 / 2 - 180,
+        WINDOW_SIZE as i32 / 2 - 50,
+        &mut canvas,
+        &ttf_context,
+    )
+    .unwrap();
+
+    canvas.present();
+
+    'metrics_loop: loop {
+        for event in event_pump.poll_iter() {
+            match event {
+                Event::Quit { .. }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => {
+                    break 'metrics_loop;
+                }
+                _ => {}
+            }
+        }
     }
 }
 
