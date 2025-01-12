@@ -52,67 +52,96 @@ pub fn main() {
                     game_over = true;
                     break 'running;
                 }
-                // Vehicle Controls
-                Event::KeyDown {
-                    keycode: Some(Keycode::Up),
-                    ..
-                } => {
-                    spawn_square_with_direction(&mut squares, Direction::Down, Direction::Up);
-                }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Down),
-                    ..
-                } => {
-                    spawn_square_with_direction(&mut squares, Direction::Up, Direction::Down);
-                }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Left),
-                    ..
-                } => {
-                    spawn_square_with_direction(&mut squares, Direction::Right, Direction::Left);
-                }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Right),
-                    ..
-                } => {
-                    spawn_square_with_direction(&mut squares, Direction::Left, Direction::Right);
-                }
-                Event::KeyDown {
-                    keycode: Some(Keycode::R),
-                    ..
-                } => {
-                    is_random_generation = !is_random_generation;
-                }
+
                 _ => {}
             }
+
+            if last_square_spawn.elapsed() >= SQUARE_SPAWN_INTERVAL {
+                match event {
+                    // Vehicle Controls
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Up),
+                        ..
+                    } => {
+                        spawn_square_with_direction(&mut squares, Direction::Down, Direction::Up);
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Down),
+                        ..
+                    } => {
+                        spawn_square_with_direction(&mut squares, Direction::Up, Direction::Down);
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Left),
+                        ..
+                    } => {
+                        spawn_square_with_direction(
+                            &mut squares,
+                            Direction::Right,
+                            Direction::Left,
+                        );
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Right),
+                        ..
+                    } => {
+                        spawn_square_with_direction(
+                            &mut squares,
+                            Direction::Left,
+                            Direction::Right,
+                        );
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::R),
+                        ..
+                    } => {
+                        is_random_generation = !is_random_generation;
+                    }
+                    _ => {}
+                }
+                last_square_spawn = Instant::now();
+            }
         }
+
+        // Add a new square every 5 seconds
+        if is_random_generation && last_square_spawn.elapsed() >= SQUARE_SPAWN_INTERVAL {
+            spawn_random_square(&mut squares);
+            last_square_spawn = Instant::now();
+        }
+
         if game_over {
             break 'running;
         }
-        const INTERSECTION_X: i32 = 400; 
-        const INTERSECTION_Y: i32 = 400; 
+        const INTERSECTION_X: i32 = 400;
+        const INTERSECTION_Y: i32 = 400;
         // Collision check: Look for collisions between squares
         for i in 0..squares.len() {
             let mut is_car_near = false;
             let mut can_move = true;
-            
-            for j in (i + 1)..squares.len() {
-                
-                if i != j {
-                               // Compare distances to the intersection
-            let distance_i = squares[i].distance_to_intersection(INTERSECTION_X, INTERSECTION_Y);
-            let distance_j = squares[j].distance_to_intersection(INTERSECTION_X, INTERSECTION_Y); 
-                
 
-                if distance_j < distance_i || (distance_j == distance_i && squares[j].priority() < squares[i].priority()) {
-                    can_move = false;
-                    println!(
-                        "Car {} must wait for car {}: Priority {} vs {}",
-                        i, j, squares[i].priority(), squares[j].priority()
-                    );
-                    break;
+            for j in (i + 1)..squares.len() {
+                if i != j {
+                    // Compare distances to the intersection
+                    let distance_i =
+                        squares[i].distance_to_intersection(INTERSECTION_X, INTERSECTION_Y);
+                    let distance_j =
+                        squares[j].distance_to_intersection(INTERSECTION_X, INTERSECTION_Y);
+
+                    if distance_j < distance_i
+                        || (distance_j == distance_i
+                            && squares[j].priority() < squares[i].priority())
+                    {
+                        can_move = false;
+                        println!(
+                            "Car {} must wait for car {}: Priority {} vs {}",
+                            i,
+                            j,
+                            squares[i].priority(),
+                            squares[j].priority()
+                        );
+                        break;
+                    }
                 }
-            }
 
                 if can_move {
                     // Move the car normally
@@ -126,8 +155,6 @@ pub fn main() {
                     squares[i].velocity = (squares[i].velocity - 1).max(0);
                 }
 
-
-
                 // check if cars are too close
                 if i != j && squares[i].is_near(&squares[j], 50) {
                     is_car_near = true;
@@ -136,7 +163,6 @@ pub fn main() {
                         i, j, squares[i].rect, squares[j].rect
                     );
                 }
-                
 
                 if is_car_near {
                     squares[i].velocity = (squares[i].velocity - 1).max(1);
@@ -160,12 +186,6 @@ pub fn main() {
 
         if game_over {
             break;
-        }
-
-        // Add a new square every 5 seconds
-        if is_random_generation && last_square_spawn.elapsed() >= SQUARE_SPAWN_INTERVAL {
-            spawn_random_square(&mut squares);
-            last_square_spawn = Instant::now();
         }
 
         // background
