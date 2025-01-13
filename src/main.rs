@@ -57,8 +57,10 @@ fn render_simulation(
     'simulation_loop: loop {
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
+                Event::Quit { .. } => {
+                    std::process::exit(0);
+                }
+                Event::KeyDown {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => {

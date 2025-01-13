@@ -167,6 +167,12 @@ pub fn spawn_square_with_direction(
         velocity,
     );
 
+    for other in squares.iter() {
+        if square.has_collision(other) {
+            return;
+        }
+    }
+
     update_metrics(&square);
 
     squares.push(square);
