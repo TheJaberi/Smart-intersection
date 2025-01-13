@@ -1,6 +1,7 @@
 mod constants;
 mod direction;
 mod image;
+mod metrics;
 mod square;
 mod text;
 use constants::*;

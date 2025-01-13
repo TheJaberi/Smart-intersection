@@ -1,5 +1,6 @@
 use crate::constants::*;
 use crate::direction::Direction;
+use crate::metrics::update_metrics;
 use rand::Rng;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
@@ -104,7 +105,7 @@ impl Square {
                 self.turn_x = None; // Clear the turn position after turning
             }
         }
-    
+
         // If the car is supposed to turn at a specific y-coordinate
         if let Some(turn_y) = self.turn_y {
             if (self.current_direction == Direction::Up && self.rect.y() <= turn_y)
@@ -116,13 +117,12 @@ impl Square {
             }
         }
     }
-    
+
     pub fn has_collision(&self, other: &Square) -> bool {
         self.rect.has_intersection(other.rect)
     }
 
     pub fn is_near(&self, other: &Square, distance: i32) -> bool {
-
         // Calculate the centers of both squares
         let center_self_x = self.rect.x() + self.rect.width() as i32 / 2;
         let center_self_y = self.rect.y() + self.rect.height() as i32 / 2;
@@ -156,7 +156,7 @@ pub fn spawn_square_with_direction(
     // let mut rng = rand::thread_rng();
     // let velocity = rng.gen_range(1..=5);
 
-    squares.push(Square::new(
+    let square = Square::new(
         calculated_coordinates.starting_x,
         calculated_coordinates.starting_y,
         initial_direction,
@@ -165,7 +165,11 @@ pub fn spawn_square_with_direction(
         calculated_coordinates.turn_x,
         calculated_coordinates.turn_y,
         velocity,
-    ));
+    );
+
+    update_metrics(&square);
+
+    squares.push(square);
 }
 
 fn calculate_coordinates(
