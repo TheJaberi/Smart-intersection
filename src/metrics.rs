@@ -27,6 +27,11 @@ pub fn update_metrics(square: &Square) {
     metrics.vehicle_count += 1;
 }
 
+pub fn increment_close_call_count() {
+    let mut metrics = METRICS.lock().unwrap();
+    metrics.close_call_count += 1;
+}
+
 pub fn get_metrics() -> Metrics {
     let metrics = METRICS.lock().unwrap();
     Metrics {
