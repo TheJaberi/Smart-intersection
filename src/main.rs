@@ -7,6 +7,7 @@ mod text;
 use constants::*;
 use direction::Direction;
 use image::draw_image;
+use metrics::get_metrics;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -230,17 +231,96 @@ fn render_metrics(
     event_pump: &mut sdl2::EventPump,
     ttf_context: &sdl2::ttf::Sdl2TtfContext,
 ) {
-    // Game over text
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
+
+    let metrics = get_metrics();
+
     draw_text(
         &canvas.texture_creator(),
         "assets/Roboto-Regular.ttf",
         48,
-        "Simulation Over",
+        "Simulation Stopped",
         Color::RGB(255, 255, 255),
-        WINDOW_SIZE as i32 / 2 - 180,
-        WINDOW_SIZE as i32 / 2 - 50,
+        WINDOW_SIZE as i32 / 2 - 200,
+        100,
+        &mut canvas,
+        &ttf_context,
+    )
+    .unwrap();
+
+    draw_text(
+        &canvas.texture_creator(),
+        "assets/Roboto-Regular.ttf",
+        32,
+        format!("Vehicles passed: {}", metrics.vehicle_count).as_str(),
+        Color::RGB(255, 255, 255),
+        WINDOW_SIZE as i32 / 2 - 200,
+        150,
+        &mut canvas,
+        &ttf_context,
+    )
+    .unwrap();
+    draw_text(
+        &canvas.texture_creator(),
+        "assets/Roboto-Regular.ttf",
+        32,
+        format!("Max Vehicle Velocity: {}", metrics.max_vehicle_speed).as_str(),
+        Color::RGB(255, 255, 255),
+        WINDOW_SIZE as i32 / 2 - 200,
+        200,
+        &mut canvas,
+        &ttf_context,
+    )
+    .unwrap();
+
+    draw_text(
+        &canvas.texture_creator(),
+        "assets/Roboto-Regular.ttf",
+        32,
+        format!("Min Vehicle Velocity: {}", metrics.min_vehicle_speed).as_str(),
+        Color::RGB(255, 255, 255),
+        WINDOW_SIZE as i32 / 2 - 200,
+        250,
+        &mut canvas,
+        &ttf_context,
+    )
+    .unwrap();
+
+    draw_text(
+        &canvas.texture_creator(),
+        "assets/Roboto-Regular.ttf",
+        32,
+        format!("Max Time to Pass: {}", metrics.max_intersection_pass_time).as_str(),
+        Color::RGB(255, 255, 255),
+        WINDOW_SIZE as i32 / 2 - 200,
+        300,
+        &mut canvas,
+        &ttf_context,
+    )
+    .unwrap();
+
+    draw_text(
+        &canvas.texture_creator(),
+        "assets/Roboto-Regular.ttf",
+        32,
+        format!("Min Time to Pass: {}", metrics.min_intersection_pass_time).as_str(),
+        Color::RGB(255, 255, 255),
+        WINDOW_SIZE as i32 / 2 - 200,
+        350,
+        &mut canvas,
+        &ttf_context,
+    )
+    .unwrap();
+
+    draw_text(
+        &canvas.texture_creator(),
+        "assets/Roboto-Regular.ttf",
+        32,
+        format!("Close Calls: {}", metrics.close_call_count).as_str(),
+        Color::RGB(255, 255, 255),
+        WINDOW_SIZE as i32 / 2 - 200,
+        400,
         &mut canvas,
         &ttf_context,
     )
