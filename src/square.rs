@@ -31,15 +31,18 @@ impl IntersectionCell {
 lazy_static! {
     static ref INTERSECTION_CELLS: Vec<IntersectionCell> = {
         let mut cells = Vec::new();
-        // Define the 16 intersection cells (4x4 grid in the intersection area)
+        // 286/57 ≈ 5, so we start from position 5
+        // Create a 4x4 grid of cells for the intersection area
         for i in 0..4 {
             for j in 0..4 {
-                cells.push(IntersectionCell {
-                    x: (4 + i) * LINE_SPACING,
-                    y: (4 + j) * LINE_SPACING,
+                let cell = IntersectionCell {
+                    x: (5 + i) * LINE_SPACING,
+                    y: (5 + j) * LINE_SPACING,
                     width: LINE_SPACING,
                     height: LINE_SPACING,
-                });
+                };
+                println!("Created intersection cell at x={}, y={}", cell.x, cell.y);
+                cells.push(cell);
             }
         }
         cells
@@ -187,6 +190,12 @@ impl Square {
     pub fn update_intersection_status(&mut self) {
         let was_in_intersection = self.in_intersection;
         self.in_intersection = INTERSECTION_CELLS.iter().any(|cell| cell.contains(self));
+        
+        if self.in_intersection {
+            println!("Vehicle at position ({}, {}) is in intersection!", 
+                    self.rect.x(), 
+                    self.rect.y());
+        }
         
         // If we just entered the intersection, record the time
         if !was_in_intersection && self.in_intersection {
