@@ -1,11 +1,10 @@
-use crate::constants::*;
 use crate::direction::Direction;
-use crate::metrics::update_metrics;
+use crate::{constants::*, metrics};
+use lazy_static::lazy_static;
 use rand::Rng;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use std::time::Instant;
-use lazy_static::lazy_static;
 
 // Represents a cell in the intersection where collisions could occur
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -20,10 +19,10 @@ impl IntersectionCell {
     fn contains(&self, square: &Square) -> bool {
         let square_center_x = square.rect.x() + square.rect.width() as i32 / 2;
         let square_center_y = square.rect.y() + square.rect.height() as i32 / 2;
-        
-        square_center_x >= self.x 
+
+        square_center_x >= self.x
             && square_center_x <= self.x + self.width
-            && square_center_y >= self.y 
+            && square_center_y >= self.y
             && square_center_y <= self.y + self.height
     }
 }
@@ -190,17 +189,19 @@ impl Square {
     pub fn update_intersection_status(&mut self) {
         let was_in_intersection = self.in_intersection;
         self.in_intersection = INTERSECTION_CELLS.iter().any(|cell| cell.contains(self));
-        
+
         if self.in_intersection {
-            println!("Vehicle at position ({}, {}) is in intersection!", 
-                    self.rect.x(), 
-                    self.rect.y());
+            println!(
+                "Vehicle at position ({}, {}) is in intersection!",
+                self.rect.x(),
+                self.rect.y()
+            );
         }
-        
+
         // If we just entered the intersection, record the time
         if !was_in_intersection && self.in_intersection {
             self.entry_time = Some(Instant::now());
-        } 
+        }
         // If we just left the intersection, calculate the time taken
         else if was_in_intersection && !self.in_intersection {
             if let Some(entry_time) = self.entry_time {
@@ -246,7 +247,7 @@ pub fn spawn_square_with_direction(
         }
     }
 
-    update_metrics(&square);
+    metrics::increment_vehicle_count();
 
     squares.push(square);
 }
