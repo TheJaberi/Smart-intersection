@@ -4,6 +4,47 @@ use crate::metrics::update_metrics;
 use rand::Rng;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
+use std::time::Instant;
+use lazy_static::lazy_static;
+
+// Represents a cell in the intersection where collisions could occur
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct IntersectionCell {
+    x: i32,
+    y: i32,
+    width: i32,
+    height: i32,
+}
+
+impl IntersectionCell {
+    fn contains(&self, square: &Square) -> bool {
+        let square_center_x = square.rect.x() + square.rect.width() as i32 / 2;
+        let square_center_y = square.rect.y() + square.rect.height() as i32 / 2;
+        
+        square_center_x >= self.x 
+            && square_center_x <= self.x + self.width
+            && square_center_y >= self.y 
+            && square_center_y <= self.y + self.height
+    }
+}
+
+lazy_static! {
+    static ref INTERSECTION_CELLS: Vec<IntersectionCell> = {
+        let mut cells = Vec::new();
+        // Define the 16 intersection cells (4x4 grid in the intersection area)
+        for i in 0..4 {
+            for j in 0..4 {
+                cells.push(IntersectionCell {
+                    x: (4 + i) * LINE_SPACING,
+                    y: (4 + j) * LINE_SPACING,
+                    width: LINE_SPACING,
+                    height: LINE_SPACING,
+                });
+            }
+        }
+        cells
+    };
+}
 
 #[derive(PartialEq)]
 pub struct Square {
@@ -15,6 +56,8 @@ pub struct Square {
     turn_x: Option<i32>,
     turn_y: Option<i32>,
     pub velocity: i32, // to control the speed
+    pub in_intersection: bool,
+    pub entry_time: Option<Instant>,
 }
 
 #[derive(Debug)]
@@ -54,6 +97,8 @@ impl Square {
             turn_x,
             turn_y,
             velocity,
+            in_intersection: false,
+            entry_time: None,
         }
     }
 
@@ -83,6 +128,7 @@ impl Square {
         }
 
         self.turn_to_target_direction();
+        self.update_intersection_status();
     }
 
     pub fn is_in_bounds(&self, window_size: u32) -> bool {
@@ -136,6 +182,24 @@ impl Square {
 
         // Return true if the distance between cars is less than or equal to the specified safe distance
         distance_near <= distance
+    }
+
+    pub fn update_intersection_status(&mut self) {
+        let was_in_intersection = self.in_intersection;
+        self.in_intersection = INTERSECTION_CELLS.iter().any(|cell| cell.contains(self));
+        
+        // If we just entered the intersection, record the time
+        if !was_in_intersection && self.in_intersection {
+            self.entry_time = Some(Instant::now());
+        } 
+        // If we just left the intersection, calculate the time taken
+        else if was_in_intersection && !self.in_intersection {
+            if let Some(entry_time) = self.entry_time {
+                let duration = entry_time.elapsed();
+                // TODO: Update metrics with intersection pass time
+            }
+            self.entry_time = None;
+        }
     }
 }
 

@@ -11,6 +11,17 @@ pub struct Metrics {
     pub close_call_count: u32,
 }
 
+impl Metrics {
+    pub fn update_intersection_time(&mut self, time: f32) {
+        if self.min_intersection_pass_time == 0.0 || time < self.min_intersection_pass_time {
+            self.min_intersection_pass_time = time;
+        }
+        if time > self.max_intersection_pass_time {
+            self.max_intersection_pass_time = time;
+        }
+    }
+}
+
 lazy_static! {
     static ref METRICS: Mutex<Metrics> = Mutex::new(Metrics {
         vehicle_count: 0,
@@ -30,6 +41,11 @@ pub fn update_metrics(square: &Square) {
 pub fn increment_close_call_count() {
     let mut metrics = METRICS.lock().unwrap();
     metrics.close_call_count += 1;
+}
+
+pub fn update_intersection_pass_time(time: f32) {
+    let mut metrics = METRICS.lock().unwrap();
+    metrics.update_intersection_time(time);
 }
 
 pub fn get_metrics() -> Metrics {
