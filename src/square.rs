@@ -95,12 +95,11 @@ impl Square {
             color,
             initial_direction,
             target_direction,
-            // if we initialize with UP, then our target is DOWN
             current_direction: initial_direction.opposite(),
             turn_x,
             turn_y,
             velocity: velocity as f32,
-            target_velocity: MAX_SPEED as f32,
+            target_velocity: HIGH_SPEED as f32,
             in_intersection: false,
             entry_time: None,
         }
@@ -132,13 +131,11 @@ impl Square {
             Direction::Right => self.rect.set_x(self.rect.x() + movement),
         }
 
-        // Gradually adjust speed towards target_velocity
-        if (self.velocity - self.target_velocity).abs() > SPEED_INCREMENT {
-            if self.velocity < self.target_velocity {
-                self.velocity += SPEED_INCREMENT;
-            } else {
-                self.velocity -= SPEED_INCREMENT;
-            }
+        // Smoothly adjust speed towards target_velocity
+        if self.velocity < self.target_velocity {
+            self.velocity = (self.velocity + 0.5).min(self.target_velocity);
+        } else if self.velocity > self.target_velocity {
+            self.velocity = (self.velocity - 0.5).max(self.target_velocity);
         }
 
         self.turn_to_target_direction();
@@ -234,24 +231,18 @@ impl Square {
         let dy = center_self_y - center_other_y;
         let distance = (((dx.pow(2) + dy.pow(2)) as f64).sqrt()) as i32;
 
-        // Calculate relative velocity based on distance
+        // Adjust speed based on distance
         if distance < CRITICAL_DISTANCE {
-            // Critical distance - slow down significantly
-            self.target_velocity = MIN_SPEED as f32;
+            self.target_velocity = LOW_SPEED as f32;
         } else if distance < safe_distance {
-            // Scale speed based on distance
-            let speed_factor = ((distance - CRITICAL_DISTANCE) as f32 
-                / (safe_distance - CRITICAL_DISTANCE) as f32)
-                .max(0.2);
-            self.target_velocity = (MAX_SPEED as f32 * speed_factor).max(MIN_SPEED as f32);
+            self.target_velocity = MEDIUM_SPEED as f32;
         } else {
-            // No nearby vehicles - gradually return to max speed
-            self.target_velocity = MAX_SPEED as f32;
+            self.target_velocity = HIGH_SPEED as f32;
         }
 
         // Additional speed adjustment based on relative positions
         if self.should_yield_to(other) {
-            self.target_velocity = self.target_velocity.min(other.velocity - SPEED_INCREMENT);
+            self.target_velocity = LOW_SPEED as f32;
         }
     }
 
@@ -302,10 +293,6 @@ pub fn spawn_square_with_direction(
 ) {
     let calculated_coordinates = calculate_coordinates(initial_direction, target_direction);
 
-    let velocity = 1;
-    // let mut rng = rand::thread_rng();
-    // let velocity = rng.gen_range(1..=5);
-
     let square = Square::new(
         calculated_coordinates.starting_x,
         calculated_coordinates.starting_y,
@@ -314,7 +301,7 @@ pub fn spawn_square_with_direction(
         SQUARE_SIZE,
         calculated_coordinates.turn_x,
         calculated_coordinates.turn_y,
-        velocity,
+        LOW_SPEED,  // Start with low speed
     );
 
     for other in squares.iter() {

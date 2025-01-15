@@ -149,7 +149,7 @@ fn render_simulation(
             // If no nearby vehicles, gradually increase speed
             let square = &mut squares[i];
             if !nearby_vehicles {
-                square.target_velocity = MAX_SPEED as f32;
+                square.target_velocity = HIGH_SPEED as f32;
             }
             square.update();
         }
