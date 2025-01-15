@@ -130,74 +130,28 @@ fn render_simulation(
         }
         const INTERSECTION_X: i32 = 400;
         const INTERSECTION_Y: i32 = 400;
-        // Collision check: Look for collisions between squares
+        // Update vehicle positions and handle intersection management
         for i in 0..squares.len() {
-            let mut is_car_near = false;
-            let mut can_move = true;
+            let mut nearby_vehicles = false;
 
-            for j in (i + 1)..squares.len() {
+            // Check interaction with other vehicles
+            for j in 0..squares.len() {
                 if i != j {
-                    // Compare distances to the intersection
-                    let distance_i =
-                        squares[i].distance_to_intersection(INTERSECTION_X, INTERSECTION_Y);
-                    let distance_j =
-                        squares[j].distance_to_intersection(INTERSECTION_X, INTERSECTION_Y);
-
-                    if distance_j < distance_i
-                        || (distance_j == distance_i
-                            && squares[j].priority() < squares[i].priority())
-                    {
-                        can_move = false;
-                        println!(
-                            "Car {} must wait for car {}: Priority {} vs {}",
-                            i,
-                            j,
-                            squares[i].priority(),
-                            squares[j].priority()
-                        );
-                        break;
+                    let (square_i, square_j) = get_two_squares(&mut squares, i, j);
+                    
+                    if square_i.is_near(square_j, SAFE_DISTANCE) {
+                        nearby_vehicles = true;
+                        square_i.adjust_speed(square_j, SAFE_DISTANCE);
                     }
                 }
-
-                if can_move {
-                    // Move the car normally
-                    squares[i].update();
-                    println!(
-                        "Car {} is moving: Position {:?}, Velocity {}",
-                        i, squares[i].rect, squares[i].velocity
-                    );
-                } else {
-                    // Slow down or stop the car
-                    squares[i].velocity = (squares[i].velocity - 1).max(0);
-                }
-
-                // check if cars are too close
-                if i != j && squares[i].is_near(&squares[j], 50) {
-                    is_car_near = true;
-                    println!(
-                        "Cars are too close between car {} and car {}: {:?} and {:?}",
-                        i, j, squares[i].rect, squares[j].rect
-                    );
-                }
-
-                if is_car_near {
-                    squares[i].velocity = (squares[i].velocity - 1).max(1);
-                } else {
-                    squares[i].velocity = (squares[i].velocity + 1).min(5);
-                }
-
-                squares[i].update();
-
-                print!("Car {} velocity: {}\n", i, squares[i].velocity);
-
-                // check if cars collide
-                if squares[i].has_collision(&squares[j]) {
-                    println!(
-                        "Collision detected between car {} and car {}: {:?} and {:?}",
-                        i, j, squares[i].rect, squares[j].rect
-                    );
-                }
             }
+
+            // If no nearby vehicles, gradually increase speed
+            let square = &mut squares[i];
+            if !nearby_vehicles {
+                square.target_velocity = MAX_SPEED as f32;
+            }
+            square.update();
         }
 
         if game_over {
@@ -223,6 +177,16 @@ fn render_simulation(
         squares.retain(|square| square.is_in_bounds(WINDOW_SIZE));
         canvas.present();
         std::thread::sleep(FRAME_DURATION);
+    }
+}
+
+fn get_two_squares(squares: &mut [Square], i: usize, j: usize) -> (&mut Square, &Square) {
+    if i < j {
+        let (left, right) = squares.split_at_mut(j);
+        (&mut left[i], &right[0])
+    } else {
+        let (left, right) = squares.split_at_mut(i);
+        (&mut right[0], &left[j])
     }
 }
 

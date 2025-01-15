@@ -57,7 +57,8 @@ pub struct Square {
     current_direction: Direction,
     turn_x: Option<i32>,
     turn_y: Option<i32>,
-    pub velocity: i32, // to control the speed
+    pub velocity: f32,  // Change velocity to f32 for smoother speed adjustments
+    pub target_velocity: f32,
     pub in_intersection: bool,
     pub entry_time: Option<Instant>,
 }
@@ -98,7 +99,8 @@ impl Square {
             current_direction: initial_direction.opposite(),
             turn_x,
             turn_y,
-            velocity,
+            velocity: velocity as f32,
+            target_velocity: MAX_SPEED as f32,
             in_intersection: false,
             entry_time: None,
         }
@@ -121,12 +123,22 @@ impl Square {
     }
 
     pub fn update(&mut self) {
-        // TODO: if more than one the `turn_to_target_direction` could break
+        // Convert velocity to i32 for movement
+        let movement = self.velocity as i32;
         match self.current_direction {
-            Direction::Down => self.rect.set_y(self.rect.y() + self.velocity),
-            Direction::Up => self.rect.set_y(self.rect.y() - self.velocity),
-            Direction::Left => self.rect.set_x(self.rect.x() - self.velocity),
-            Direction::Right => self.rect.set_x(self.rect.x() + self.velocity),
+            Direction::Down => self.rect.set_y(self.rect.y() + movement),
+            Direction::Up => self.rect.set_y(self.rect.y() - movement),
+            Direction::Left => self.rect.set_x(self.rect.x() - movement),
+            Direction::Right => self.rect.set_x(self.rect.x() + movement),
+        }
+
+        // Gradually adjust speed towards target_velocity
+        if (self.velocity - self.target_velocity).abs() > SPEED_INCREMENT {
+            if self.velocity < self.target_velocity {
+                self.velocity += SPEED_INCREMENT;
+            } else {
+                self.velocity -= SPEED_INCREMENT;
+            }
         }
 
         self.turn_to_target_direction();
@@ -209,6 +221,70 @@ impl Square {
                 // TODO: Update metrics with intersection pass time
             }
             self.entry_time = None;
+        }
+    }
+
+    pub fn adjust_speed(&mut self, other: &Square, safe_distance: i32) {
+        let center_self_x = self.rect.x() + self.rect.width() as i32 / 2;
+        let center_self_y = self.rect.y() + self.rect.height() as i32 / 2;
+        let center_other_x = other.rect.x() + other.rect.width() as i32 / 2;
+        let center_other_y = other.rect.y() + other.rect.height() as i32 / 2;
+
+        let dx = center_self_x - center_other_x;
+        let dy = center_self_y - center_other_y;
+        let distance = (((dx.pow(2) + dy.pow(2)) as f64).sqrt()) as i32;
+
+        // Calculate relative velocity based on distance
+        if distance < CRITICAL_DISTANCE {
+            // Critical distance - slow down significantly
+            self.target_velocity = MIN_SPEED as f32;
+        } else if distance < safe_distance {
+            // Scale speed based on distance
+            let speed_factor = ((distance - CRITICAL_DISTANCE) as f32 
+                / (safe_distance - CRITICAL_DISTANCE) as f32)
+                .max(0.2);
+            self.target_velocity = (MAX_SPEED as f32 * speed_factor).max(MIN_SPEED as f32);
+        } else {
+            // No nearby vehicles - gradually return to max speed
+            self.target_velocity = MAX_SPEED as f32;
+        }
+
+        // Additional speed adjustment based on relative positions
+        if self.should_yield_to(other) {
+            self.target_velocity = self.target_velocity.min(other.velocity - SPEED_INCREMENT);
+        }
+    }
+
+    pub fn should_yield_to(&self, other: &Square) -> bool {
+        if !self.in_intersection && !other.in_intersection {
+            return false;
+        }
+
+        let self_center_x = self.rect.x() + self.rect.width() as i32 / 2;
+        let self_center_y = self.rect.y() + self.rect.height() as i32 / 2;
+        let other_center_x = other.rect.x() + other.rect.width() as i32 / 2;
+        let other_center_y = other.rect.y() + other.rect.height() as i32 / 2;
+
+        // Distance to intersection center
+        let self_dist = ((self_center_x - 400).pow(2) + (self_center_y - 400).pow(2)) as f32;
+        let other_dist = ((other_center_x - 400).pow(2) + (other_center_y - 400).pow(2)) as f32;
+
+        // Consider both distance and priority
+        if (self_dist - other_dist).abs() > 5000.0 {
+            return self_dist > other_dist;
+        }
+
+        // If distances are similar, use direction-based priority
+        if self.priority() == other.priority() {
+            // Same priority - yield to the vehicle on the right
+            match self.current_direction {
+                Direction::Up => other.current_direction == Direction::Right,
+                Direction::Right => other.current_direction == Direction::Down,
+                Direction::Down => other.current_direction == Direction::Left,
+                Direction::Left => other.current_direction == Direction::Up,
+            }
+        } else {
+            self.priority() > other.priority()
         }
     }
 }
