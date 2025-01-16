@@ -41,142 +41,175 @@ pub fn main() {
 
     render_metrics(&mut canvas, &mut event_pump, &ttf_context);
 }
-
 fn render_simulation(
     mut canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
     event_pump: &mut sdl2::EventPump,
 ) {
     let mut squares: Vec<Square> = vec![];
-
     let mut last_square_spawn = Instant::now();
     let mut is_random_generation = false;
 
-    // Draw the lines once at the start
+    // Define intersection points with their initial occupancy status
+    let mut intersection_points = vec![
+        ((285, 285), false),
+        ((285, 342), false),
+        ((285, 399), false),
+        ((285, 456), false),
+        ((342, 285), false),
+        ((342, 342), false),
+        ((342, 399), false),
+        ((342, 456), false),
+        ((399, 285), false),
+        ((399, 342), false),
+        ((399, 399), false),
+        ((399, 456), false),
+        ((456, 285), false),
+        ((456, 342), false),
+        ((456, 399), false),
+        ((456, 456), false),
+    ];
+
     draw_lines(&mut canvas);
 
-    let mut game_over = false;
     'simulation_loop: loop {
+        // Handle events
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit { .. } => {
-                    std::process::exit(0);
-                }
+                Event::Quit { .. } => std::process::exit(0),
                 Event::KeyDown {
                     keycode: Some(Keycode::Escape),
                     ..
-                } => {
-                    game_over = true;
-                    break 'simulation_loop;
-                }
-
+                } => break 'simulation_loop,
+                Event::KeyDown {
+                    keycode: Some(Keycode::Up),
+                    ..
+                } => spawn_square_with_direction(&mut squares, Direction::Down, Direction::Up),
+                Event::KeyDown {
+                    keycode: Some(Keycode::Down),
+                    ..
+                } => spawn_square_with_direction(&mut squares, Direction::Up, Direction::Down),
+                Event::KeyDown {
+                    keycode: Some(Keycode::Left),
+                    ..
+                } => spawn_square_with_direction(&mut squares, Direction::Right, Direction::Left),
+                Event::KeyDown {
+                    keycode: Some(Keycode::Right),
+                    ..
+                } => spawn_square_with_direction(&mut squares, Direction::Left, Direction::Right),
+                Event::KeyDown {
+                    keycode: Some(Keycode::R),
+                    ..
+                } => is_random_generation = !is_random_generation,
                 _ => {}
-            }
-
-            if last_square_spawn.elapsed() >= SQUARE_SPAWN_INTERVAL {
-                match event {
-                    // Vehicle Controls
-                    Event::KeyDown {
-                        keycode: Some(Keycode::Up),
-                        ..
-                    } => {
-                        spawn_square_with_direction(&mut squares, Direction::Down, Direction::Up);
-                    }
-                    Event::KeyDown {
-                        keycode: Some(Keycode::Down),
-                        ..
-                    } => {
-                        spawn_square_with_direction(&mut squares, Direction::Up, Direction::Down);
-                    }
-                    Event::KeyDown {
-                        keycode: Some(Keycode::Left),
-                        ..
-                    } => {
-                        spawn_square_with_direction(
-                            &mut squares,
-                            Direction::Right,
-                            Direction::Left,
-                        );
-                    }
-                    Event::KeyDown {
-                        keycode: Some(Keycode::Right),
-                        ..
-                    } => {
-                        spawn_square_with_direction(
-                            &mut squares,
-                            Direction::Left,
-                            Direction::Right,
-                        );
-                    }
-                    Event::KeyDown {
-                        keycode: Some(Keycode::R),
-                        ..
-                    } => {
-                        is_random_generation = !is_random_generation;
-                    }
-                    _ => {}
-                }
-                last_square_spawn = Instant::now();
             }
         }
 
-        // Add a new square every 5 seconds
+        // Spawn a random square periodically if random generation is enabled
         if is_random_generation && last_square_spawn.elapsed() >= SQUARE_SPAWN_INTERVAL {
             spawn_random_square(&mut squares);
             last_square_spawn = Instant::now();
         }
 
-        if game_over {
-            break 'simulation_loop;
-        }
-        const INTERSECTION_X: i32 = 400;
-        const INTERSECTION_Y: i32 = 400;
-        // Update vehicle positions and handle intersection management
+        // Predict collisions between squares
         for i in 0..squares.len() {
-            let mut nearby_vehicles = false;
+            let square_a = &squares[i];
+            let predicted_position_a = predict_square_position(square_a);
 
-            // Check interaction with other vehicles
-            for j in 0..squares.len() {
-                if i != j {
-                    let (square_i, square_j) = get_two_squares(&mut squares, i, j);
-                    
-                    if square_i.is_near(square_j, SAFE_DISTANCE) {
-                        nearby_vehicles = true;
-                        square_i.adjust_speed(square_j, SAFE_DISTANCE);
-                    }
+            for j in (i + 1)..squares.len() {
+                let square_b = &squares[j];
+                let predicted_position_b = predict_square_position(square_b);
+
+                // Check if the predicted positions will overlap based on X and Y ranges
+                let a_left = predicted_position_a.0;
+                let a_right = predicted_position_a.0 + square_a.rect.width() as i32;
+                let a_top = predicted_position_a.1;
+                let a_bottom = predicted_position_a.1 + square_a.rect.height() as i32;
+
+                let b_left = predicted_position_b.0;
+                let b_right = predicted_position_b.0 + square_b.rect.width() as i32;
+                let b_top = predicted_position_b.1;
+                let b_bottom = predicted_position_b.1 + square_b.rect.height() as i32;
+
+                if a_right > b_left && a_left < b_right && a_bottom > b_top && a_top < b_bottom {
+                    println!(
+                        "Collision predicted: Square A (current: ({}, {}), predicted: ({}, {})) and Square B (current: ({}, {}), predicted: ({}, {}))",
+                        square_a.rect.x(),
+                        square_a.rect.y(),
+                        predicted_position_a.0,
+                        predicted_position_a.1,
+                        square_b.rect.x(),
+                        square_b.rect.y(),
+                        predicted_position_b.0,
+                        predicted_position_b.1
+                    );
                 }
             }
+        }
 
-            // If no nearby vehicles, gradually increase speed
-            let square = &mut squares[i];
-            if !nearby_vehicles {
-                square.target_velocity = HIGH_SPEED as f32;
+        // Update squares
+        for square in &mut squares {
+            // Check each intersection point
+            for (point, occupied) in &mut intersection_points {
+                let (x, y) = *point;
+                let intersection_distance = square.distance_to_intersection(x, y);
+
+                if intersection_distance < SAFE_DISTANCE {
+                    if *occupied {
+                        // Slow down the square if the intersection is occupied
+                        square.target_velocity = LOW_SPEED as f32;
+                    } else {
+                        // Resume normal speed if the intersection is free
+                        square.target_velocity = HIGH_SPEED as f32;
+                    }
+                }
+
+                // Update intersection status based on the square's presence
+                if square.rect.contains_point((x, y)) {
+                    *occupied = true;
+                } else if *occupied {
+                    *occupied = false;
+                }
+
+                // Print intersection status
+                // println!(
+                //     "Intersection at ({}, {}) is {}",
+                //     x,
+                //     y,
+                //     if *occupied { "occupied" } else { "free" }
+                // );
             }
+
             square.update();
         }
 
-        if game_over {
-            break;
-        }
-
-        // background
+        // Render
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
-
-        // Draw the lines every frame
         draw_lines(&mut canvas);
 
-        // square
-        // Draw and update squares
-        for square in &mut squares {
+        for square in &squares {
             canvas.set_draw_color(square.color);
             canvas.fill_rect(square.rect).unwrap();
-            square.update();
         }
 
         // Remove out-of-bounds squares
         squares.retain(|square| square.is_in_bounds(WINDOW_SIZE));
+
         canvas.present();
+
+        // Control frame rate
         std::thread::sleep(FRAME_DURATION);
+    }
+}
+
+
+ fn predict_square_position(square: &Square) -> (i32, i32) {
+    let movement = square.velocity as i32;
+    match square.current_direction {
+        Direction::Up => (square.rect.x(), square.rect.y() - movement),
+        Direction::Down => (square.rect.x(), square.rect.y() + movement),
+        Direction::Left => (square.rect.x() - movement, square.rect.y()),
+        Direction::Right => (square.rect.x() + movement, square.rect.y()),
     }
 }
 

@@ -54,7 +54,7 @@ pub struct Square {
     pub color: Color,
     pub initial_direction: Direction,
     pub target_direction: Direction,
-    current_direction: Direction,
+    pub current_direction: Direction,
     turn_x: Option<i32>,
     turn_y: Option<i32>,
     pub velocity: f32,  // Change velocity to f32 for smoother speed adjustments
@@ -278,6 +278,9 @@ impl Square {
             self.priority() > other.priority()
         }
     }
+
+
+
 }
 
 pub fn spawn_random_square(squares: &mut Vec<Square>) {
