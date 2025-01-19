@@ -6,9 +6,14 @@ pub const FRAME_DURATION: std::time::Duration = std::time::Duration::from_millis
 pub const SQUARE_SPAWN_INTERVAL: std::time::Duration = std::time::Duration::from_millis(250);
 
 // Remove MIN_SPEED, MAX_SPEED, and SPEED_INCREMENT
-pub const LOW_SPEED: i32 = 3;
-pub const MEDIUM_SPEED: i32 = 7;
-pub const HIGH_SPEED: i32 = 12;
+pub const LOW_SPEED: i32 = 2;
+pub const MEDIUM_SPEED: i32 = 5;
+pub const HIGH_SPEED: i32 = 8;
 
 pub const SAFE_DISTANCE: i32 = 100;
 pub const CRITICAL_DISTANCE: i32 = 60;
+
+
+pub const GRID_SIZE: i32 = 10; // Size of each grid cell
+pub const INTERSECTION_WIDTH: i32 = WINDOW_SIZE as i32 / GRID_SIZE;
+pub const INTERSECTION_HEIGHT: i32 = WINDOW_SIZE as i32 / GRID_SIZE;

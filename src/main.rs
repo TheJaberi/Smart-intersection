@@ -14,6 +14,68 @@ use sdl2::pixels::Color;
 use square::{spawn_random_square, spawn_square_with_direction, Square};
 use std::time::Instant;
 use text::draw_text;
+use crate::GRID_SIZE;
+use square::IntersectionGrid;
+
+fn adjust_speeds(squares: &mut Vec<Square>, grid: &mut IntersectionGrid) {
+    for square in squares.iter_mut() {
+        let path = square.plan_path(grid);
+        let mut is_path_clear = true;
+        let mut is_path_partially_clear = false;
+
+        // Check if the path is completely clear
+        for &(x, y) in &path {
+            if grid.is_reserved(x, y) && grid.reserved[x as usize][y as usize] != Some(square.id) {
+                is_path_clear = false;
+                break;
+            }
+        }
+
+        // Check if the path is partially clear
+        if !is_path_clear {
+            for &(x, y) in &path {
+                if !grid.is_reserved(x, y) {
+                    is_path_partially_clear = true;
+                    break;
+                }
+            }
+        }
+
+        // Adjust speed based on path clearance
+        if is_path_clear {
+            square.target_velocity = HIGH_SPEED as f32;
+        } else if is_path_partially_clear {
+            square.target_velocity = MEDIUM_SPEED as f32;
+        } else {
+            square.target_velocity = LOW_SPEED as f32;
+        }
+    }
+}
+
+fn assign_priorities(squares: &mut Vec<Square>, grid: &mut IntersectionGrid) {
+    squares.sort_by_key(|s| s.priority()); // Sort by priority (lower value = higher priority)
+
+    for square in squares.iter_mut() {
+        let path = square.plan_path(grid);
+        let mut can_reserve = true;
+
+        for &(x, y) in &path {
+            if grid.is_reserved(x, y) {
+                can_reserve = false;
+                break;
+            }
+        }
+
+        if can_reserve {
+            for &(x, y) in &path {
+                grid.reserve(x, y, square.id);
+            }
+            square.target_velocity = HIGH_SPEED as f32;
+        } else {
+            square.target_velocity = LOW_SPEED as f32;
+        }
+    }
+}
 
 pub fn main() {
     let sdl_context = sdl2::init().expect("Failed to initialize SDL2");
@@ -41,6 +103,8 @@ pub fn main() {
 
     render_metrics(&mut canvas, &mut event_pump, &ttf_context);
 }
+
+
 fn render_simulation(
     mut canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
     event_pump: &mut sdl2::EventPump,
@@ -48,26 +112,8 @@ fn render_simulation(
     let mut squares: Vec<Square> = vec![];
     let mut last_square_spawn = Instant::now();
     let mut is_random_generation = false;
-
-    // Define intersection points with their initial occupancy status
-    let mut intersection_points = vec![
-        ((285, 285), false),
-        ((285, 342), false),
-        ((285, 399), false),
-        ((285, 456), false),
-        ((342, 285), false),
-        ((342, 342), false),
-        ((342, 399), false),
-        ((342, 456), false),
-        ((399, 285), false),
-        ((399, 342), false),
-        ((399, 399), false),
-        ((399, 456), false),
-        ((456, 285), false),
-        ((456, 342), false),
-        ((456, 399), false),
-        ((456, 456), false),
-    ];
+    let mut next_id: u32 = 0; // Track the next ID to assign
+    let mut grid = IntersectionGrid::new(); // Initialize the intersection grid
 
     draw_lines(&mut canvas);
 
@@ -83,19 +129,31 @@ fn render_simulation(
                 Event::KeyDown {
                     keycode: Some(Keycode::Up),
                     ..
-                } => spawn_square_with_direction(&mut squares, Direction::Down, Direction::Up),
+                } => {
+                    next_id += 1;
+                    spawn_square_with_direction(&mut squares, Direction::Down, Direction::Up, next_id);
+                }
                 Event::KeyDown {
                     keycode: Some(Keycode::Down),
                     ..
-                } => spawn_square_with_direction(&mut squares, Direction::Up, Direction::Down),
+                } => {
+                    next_id += 1;
+                    spawn_square_with_direction(&mut squares, Direction::Up, Direction::Down, next_id);
+                }
                 Event::KeyDown {
                     keycode: Some(Keycode::Left),
                     ..
-                } => spawn_square_with_direction(&mut squares, Direction::Right, Direction::Left),
+                } => {
+                    next_id += 1;
+                    spawn_square_with_direction(&mut squares, Direction::Right, Direction::Left, next_id);
+                }
                 Event::KeyDown {
                     keycode: Some(Keycode::Right),
                     ..
-                } => spawn_square_with_direction(&mut squares, Direction::Left, Direction::Right),
+                } => {
+                    next_id += 1;
+                    spawn_square_with_direction(&mut squares, Direction::Left, Direction::Right, next_id);
+                }
                 Event::KeyDown {
                     keycode: Some(Keycode::R),
                     ..
@@ -106,79 +164,19 @@ fn render_simulation(
 
         // Spawn a random square periodically if random generation is enabled
         if is_random_generation && last_square_spawn.elapsed() >= SQUARE_SPAWN_INTERVAL {
-            spawn_random_square(&mut squares);
+            next_id += 1;
+            spawn_random_square(&mut squares, next_id);
             last_square_spawn = Instant::now();
         }
 
-        // Predict collisions between squares
-        for i in 0..squares.len() {
-            let square_a = &squares[i];
-            let predicted_position_a = predict_square_position(square_a);
+        // Assign priorities and reserve cells
+        assign_priorities(&mut squares, &mut grid);
 
-            for j in (i + 1)..squares.len() {
-                let square_b = &squares[j];
-                let predicted_position_b = predict_square_position(square_b);
-
-                // Check if the predicted positions will overlap based on X and Y ranges
-                let a_left = predicted_position_a.0;
-                let a_right = predicted_position_a.0 + square_a.rect.width() as i32;
-                let a_top = predicted_position_a.1;
-                let a_bottom = predicted_position_a.1 + square_a.rect.height() as i32;
-
-                let b_left = predicted_position_b.0;
-                let b_right = predicted_position_b.0 + square_b.rect.width() as i32;
-                let b_top = predicted_position_b.1;
-                let b_bottom = predicted_position_b.1 + square_b.rect.height() as i32;
-
-                if a_right > b_left && a_left < b_right && a_bottom > b_top && a_top < b_bottom {
-                    println!(
-                        "Collision predicted: Square A (current: ({}, {}), predicted: ({}, {})) and Square B (current: ({}, {}), predicted: ({}, {}))",
-                        square_a.rect.x(),
-                        square_a.rect.y(),
-                        predicted_position_a.0,
-                        predicted_position_a.1,
-                        square_b.rect.x(),
-                        square_b.rect.y(),
-                        predicted_position_b.0,
-                        predicted_position_b.1
-                    );
-                }
-            }
-        }
+        // Adjust speeds based on grid reservations
+        adjust_speeds(&mut squares, &mut grid);
 
         // Update squares
         for square in &mut squares {
-            // Check each intersection point
-            for (point, occupied) in &mut intersection_points {
-                let (x, y) = *point;
-                let intersection_distance = square.distance_to_intersection(x, y);
-
-                if intersection_distance < SAFE_DISTANCE {
-                    if *occupied {
-                        // Slow down the square if the intersection is occupied
-                        square.target_velocity = LOW_SPEED as f32;
-                    } else {
-                        // Resume normal speed if the intersection is free
-                        square.target_velocity = HIGH_SPEED as f32;
-                    }
-                }
-
-                // Update intersection status based on the square's presence
-                if square.rect.contains_point((x, y)) {
-                    *occupied = true;
-                } else if *occupied {
-                    *occupied = false;
-                }
-
-                // Print intersection status
-                // println!(
-                //     "Intersection at ({}, {}) is {}",
-                //     x,
-                //     y,
-                //     if *occupied { "occupied" } else { "free" }
-                // );
-            }
-
             square.update();
         }
 
@@ -187,6 +185,13 @@ fn render_simulation(
         canvas.clear();
         draw_lines(&mut canvas);
 
+        // Draw predicted paths
+        for square in &squares {
+            let path = square.plan_path(&mut grid); // Pass mutable reference
+            draw_path(&mut canvas, &path, Color::RGB(255, 0, 0)); // Draw path in red
+        }
+
+        // Draw squares
         for square in &squares {
             canvas.set_draw_color(square.color);
             canvas.fill_rect(square.rect).unwrap();
@@ -203,6 +208,26 @@ fn render_simulation(
 }
 
 
+
+
+   fn reserve_intersection(squares: &mut Vec<Square>) {
+    for square in squares.iter_mut() {
+        if square.in_intersection {
+            // Reserve the intersection area for this car
+            square.target_velocity = LOW_SPEED as f32;
+        } else {
+            // Gradually increase speed if the intersection is free
+            square.target_velocity = HIGH_SPEED as f32;
+        }
+    }
+} 
+fn draw_path(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>, path: &[(i32, i32)], color: Color) {
+    for &(x, y) in path {
+        canvas.set_draw_color(color);
+        canvas.draw_point((x, y)).unwrap();
+    }
+}
+
  fn predict_square_position(square: &Square) -> (i32, i32) {
     let movement = square.velocity as i32;
     match square.current_direction {
@@ -213,15 +238,16 @@ fn render_simulation(
     }
 }
 
-fn get_two_squares(squares: &mut [Square], i: usize, j: usize) -> (&mut Square, &Square) {
+fn get_two_squares(squares: &mut [Square], i: usize, j: usize) -> (&mut Square, &mut Square) {
     if i < j {
         let (left, right) = squares.split_at_mut(j);
-        (&mut left[i], &right[0])
+        (&mut left[i], &mut right[0])
     } else {
         let (left, right) = squares.split_at_mut(i);
-        (&mut right[0], &left[j])
+        (&mut right[0], &mut left[j])
     }
 }
+
 
 fn render_metrics(
     mut canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,

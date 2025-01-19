@@ -6,6 +6,43 @@ use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use std::time::Instant;
 
+
+pub struct IntersectionGrid {
+    pub reserved: Vec<Vec<Option<u32>>>, // Grid of reserved cells (car ID or None)
+}
+
+impl IntersectionGrid {
+    pub fn new() -> Self {
+        IntersectionGrid {
+            reserved: vec![vec![None; INTERSECTION_HEIGHT as usize]; INTERSECTION_WIDTH as usize],
+        }
+    }
+
+    pub fn reserve(&mut self, x: i32, y: i32, car_id: u32) -> bool {
+        if x >= 0 && x < INTERSECTION_WIDTH && y >= 0 && y < INTERSECTION_HEIGHT {
+            if self.reserved[x as usize][y as usize].is_none() {
+                self.reserved[x as usize][y as usize] = Some(car_id);
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn release(&mut self, x: i32, y: i32) {
+        if x >= 0 && x < INTERSECTION_WIDTH && y >= 0 && y < INTERSECTION_HEIGHT {
+            self.reserved[x as usize][y as usize] = None;
+        }
+    }
+
+    pub fn is_reserved(&self, x: i32, y: i32) -> bool {
+        if x >= 0 && x < INTERSECTION_WIDTH && y >= 0 && y < INTERSECTION_HEIGHT {
+            self.reserved[x as usize][y as usize].is_some()
+        } else {
+            false
+        }
+    }
+}
+
 // Represents a cell in the intersection where collisions could occur
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct IntersectionCell {
@@ -50,6 +87,7 @@ lazy_static! {
 
 #[derive(PartialEq)]
 pub struct Square {
+    pub id: u32, // Unique ID for each vehicle
     pub rect: Rect,
     pub color: Color,
     pub initial_direction: Direction,
@@ -57,7 +95,7 @@ pub struct Square {
     pub current_direction: Direction,
     turn_x: Option<i32>,
     turn_y: Option<i32>,
-    pub velocity: f32,  // Change velocity to f32 for smoother speed adjustments
+    pub velocity: f32,
     pub target_velocity: f32,
     pub in_intersection: bool,
     pub entry_time: Option<Instant>,
@@ -73,6 +111,7 @@ struct CalculatedCoordinates {
 
 impl Square {
     pub fn new(
+        id: u32, // Add ID as a parameter
         x: i32,
         y: i32,
         initial_direction: Direction,
@@ -91,6 +130,7 @@ impl Square {
         let rect = Rect::new(x, y, size, size);
 
         Square {
+            id,
             rect,
             color,
             initial_direction,
@@ -105,14 +145,15 @@ impl Square {
         }
     }
 
-    pub fn priority(&self) -> i32 {
-        match self.current_direction {
-            Direction::Right => 1,
-            Direction::Up => 2,
-            Direction::Left => 3,
-            Direction::Down => 4,
-        }
+  // Assign priority based on ID and direction
+  pub fn priority(&self) -> u32 {
+    match self.current_direction {
+        Direction::Right => 1, // Highest priority
+        Direction::Up => 2,
+        Direction::Left => 3,
+        Direction::Down => 4, // Lowest priority
     }
+}
 
     pub fn distance_to_intersection(&self, intersection_x: i32, intersection_y: i32) -> i32 {
         // Calculate the distance to the intersection center
@@ -131,7 +172,7 @@ impl Square {
             Direction::Right => self.rect.set_x(self.rect.x() + movement),
         }
 
-        // Smoothly adjust speed towards target_velocity
+        // Gradually adjust speed towards target_velocity
         if self.velocity < self.target_velocity {
             self.velocity = (self.velocity + 0.5).min(self.target_velocity);
         } else if self.velocity > self.target_velocity {
@@ -195,6 +236,16 @@ impl Square {
         distance_near <= distance
     }
 
+    pub fn predict_position(&self, steps: i32) -> (i32, i32) {
+        let movement = (self.velocity * steps as f32) as i32;
+        match self.current_direction {
+            Direction::Up => (self.rect.x(), self.rect.y() - movement),
+            Direction::Down => (self.rect.x(), self.rect.y() + movement),
+            Direction::Left => (self.rect.x() - movement, self.rect.y()),
+            Direction::Right => (self.rect.x() + movement, self.rect.y()),
+        }
+    }
+
     pub fn update_intersection_status(&mut self) {
         let was_in_intersection = self.in_intersection;
         self.in_intersection = INTERSECTION_CELLS.iter().any(|cell| cell.contains(self));
@@ -221,7 +272,8 @@ impl Square {
         }
     }
 
-    pub fn adjust_speed(&mut self, other: &Square, safe_distance: i32) {
+    
+    pub fn adjust_speed_based_on_collision(&mut self, other: &Square, safe_distance: i32) {
         let center_self_x = self.rect.x() + self.rect.width() as i32 / 2;
         let center_self_y = self.rect.y() + self.rect.height() as i32 / 2;
         let center_other_x = other.rect.x() + other.rect.width() as i32 / 2;
@@ -238,11 +290,6 @@ impl Square {
             self.target_velocity = MEDIUM_SPEED as f32;
         } else {
             self.target_velocity = HIGH_SPEED as f32;
-        }
-
-        // Additional speed adjustment based on relative positions
-        if self.should_yield_to(other) {
-            self.target_velocity = LOW_SPEED as f32;
         }
     }
 
@@ -280,23 +327,122 @@ impl Square {
     }
 
 
+    pub fn will_collide_with(&self, other: &Square, steps: i32) -> bool {
+        let future_a = self.predict_position(steps); // Predict future position
+        let future_b = other.predict_position(steps);
+
+        // Check if future positions overlap
+        let a_left = future_a.0;
+        let a_right = future_a.0 + self.rect.width() as i32;
+        let a_top = future_a.1;
+        let a_bottom = future_a.1 + self.rect.height() as i32;
+
+        let b_left = future_b.0;
+        let b_right = future_b.0 + other.rect.width() as i32;
+        let b_top = future_b.1;
+        let b_bottom = future_b.1 + other.rect.height() as i32;
+
+        a_right > b_left && a_left < b_right && a_bottom > b_top && a_top < b_bottom
+    }
+
+    pub fn will_enter_intersection_at(&self, point: (i32, i32)) -> bool {
+        let future_position = self.predict_position(100); // Predict 5 steps ahead
+        let future_rect = Rect::new(
+            future_position.0,
+            future_position.1,
+            self.rect.width(),
+            self.rect.height(),
+        );
+
+        future_rect.contains_point(point)
+    }
+
+
+   pub fn predict_path(&self, steps: i32) -> Vec<(i32, i32)> {
+        let mut path = Vec::new();
+        let mut x = self.rect.x();
+        let mut y = self.rect.y();
+
+        for _ in 0..steps {
+            match self.current_direction {
+                Direction::Up => y -= self.velocity as i32,
+                Direction::Down => y += self.velocity as i32,
+                Direction::Left => x -= self.velocity as i32,
+                Direction::Right => x += self.velocity as i32,
+            }
+            path.push((x, y));
+        }
+
+        path
+    }
+
+    
+    pub fn paths_collide(&self, other: &Square, steps: i32) -> bool {
+        let path_a = self.predict_path(steps);
+        let path_b = other.predict_path(steps);
+
+        for &(ax, ay) in &path_a {
+            for &(bx, by) in &path_b {
+                if ax == bx && ay == by {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+
+    pub fn path_intersects_with(&self, other: &Square, steps: i32) -> bool {
+        let path = self.predict_path(steps);
+
+        for &(x, y) in &path {
+            if other.rect.contains_point((x, y)) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn plan_path(&self, grid: &IntersectionGrid) -> Vec<(i32, i32)> {
+        let mut path = Vec::new();
+        let mut x = self.rect.x() / GRID_SIZE;
+        let mut y = self.rect.y() / GRID_SIZE;
+    
+        for _ in 0..20 {
+            match self.current_direction {
+                Direction::Up => y -= 1,
+                Direction::Down => y += 1,
+                Direction::Left => x -= 1,
+                Direction::Right => x += 1,
+            }
+            path.push((x, y));
+        }
+    
+        path
+    }
 
 }
 
-pub fn spawn_random_square(squares: &mut Vec<Square>) {
+
+
+pub fn spawn_random_square(squares: &mut Vec<Square>, id: u32) {
     let initial_direction = Direction::new(None);
     let target_direction = Direction::new(Some(initial_direction));
-    spawn_square_with_direction(squares, initial_direction, target_direction);
+    spawn_square_with_direction(squares, initial_direction, target_direction, id);
 }
 
 pub fn spawn_square_with_direction(
     squares: &mut Vec<Square>,
     initial_direction: Direction,
     target_direction: Direction,
+    id: u32, // Add ID as a parameter
 ) {
     let calculated_coordinates = calculate_coordinates(initial_direction, target_direction);
 
     let square = Square::new(
+        id, // Pass the ID to the Square constructor
         calculated_coordinates.starting_x,
         calculated_coordinates.starting_y,
         initial_direction,
