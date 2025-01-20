@@ -11,7 +11,7 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 // Remove unused Instant import
 use text::draw_text;
-use crate::car::Car;
+use crate::car::{Car, FRect, Vec2};  // Add FRect and Vec2 imports
 use rand::Rng;
 use sdl2::image::LoadTexture;
 
@@ -72,6 +72,14 @@ fn render_simulation(
     
     draw_lines(canvas);
 
+    // Define intersection area
+    let core_intersection = FRect::new(
+        (6 * LINE_SPACING) as f32,
+        (6 * LINE_SPACING) as f32,
+        (2 * LINE_SPACING) as f32,
+        (2 * LINE_SPACING) as f32,
+    );
+
     'simulation_loop: loop {
         // Handle events
         for event in event_pump.poll_iter() {
@@ -119,7 +127,15 @@ fn render_simulation(
             // Update car
             cars[i].update_radar(i, &temp_cars);
             cars[i].adjust_current_speed();
+            cars[i].communicate_with_intersection(&temp_cars, &core_intersection);
+            cars[i].turn_if_can(&temp_cars);
             cars[i].move_one_step_if_no_collide(&mut temp_cars);
+            
+            // Track metrics
+            update_vehicle_speed(cars[i].current_speed);
+            if !cars[i].has_turned {
+                update_intersection_time(cars[i].lifetime.elapsed().as_secs_f32());
+            }
             
             // Draw car
             cars[i].draw_all_components(canvas, &car_texture, true)
@@ -132,6 +148,18 @@ fn render_simulation(
 
             i += 1;
         }
+
+        // Remove cars that have reached their destination
+        cars.retain(|car| {
+            let distance_to_dest = Vec2::new(car.car_rect.x, car.car_rect.y)
+                .distance(car.dest_point);
+            if distance_to_dest < 10.0 {
+                increment_vehicle_count();
+                false
+            } else {
+                true
+            }
+        });
 
         canvas.present();
         std::thread::sleep(FRAME_DURATION);

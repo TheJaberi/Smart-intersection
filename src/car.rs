@@ -83,21 +83,22 @@ impl Car {
     /// Create a new Car with some randomized behavior, direction, spawn points, etc.
     pub fn new(id: u32, randomized_behavior: &str, initial_direction: &str) -> Self {
         let mut rng = rand::thread_rng();
-        let random_speed = rng.gen_range(0.8..2.0);
+        let random_speed = rng.gen_range(1.5..3.0);  // Increased speed range
 
+        // Update spawn points to match window size
         let spawning = match randomized_behavior {
-            "RU" => Vec2::new(1050., 495.),
-            "RL" => Vec2::new(1050., 535.),
-            "RD" => Vec2::new(1050., 574.),
-            "DU" => Vec2::new(643., 1050.),
-            "DL" => Vec2::new(603., 1050.),
-            "DR" => Vec2::new(683., 1050.),
-            "LU" => Vec2::new(150., 617.),
-            "LR" => Vec2::new(150., 655.),
-            "LD" => Vec2::new(150., 695.),
-            "UD" => Vec2::new(516., 100.),
-            "UR" => Vec2::new(558., 100.),
-            "UL" => Vec2::new(477., 100.),
+            "RU" => Vec2::new(1150., 495.),  // Adjusted x coordinate
+            "RL" => Vec2::new(1150., 535.),
+            "RD" => Vec2::new(1150., 574.),
+            "DU" => Vec2::new(643., 1150.),  // Adjusted y coordinate
+            "DL" => Vec2::new(603., 1150.),
+            "DR" => Vec2::new(683., 1150.),
+            "LU" => Vec2::new(50., 617.),   // Adjusted x coordinate
+            "LR" => Vec2::new(50., 655.),
+            "LD" => Vec2::new(50., 695.),
+            "UD" => Vec2::new(516., 50.),   // Adjusted y coordinate
+            "UR" => Vec2::new(558., 50.),
+            "UL" => Vec2::new(477., 50.),
             _ => panic!("Unexpected lane"),
         };
 
@@ -361,8 +362,23 @@ impl Car {
 
     /// Turn the Car if the conditions for turning (based on behavior_code) are met.
     pub fn turn_if_can(&mut self, temp_cars: &Vec<Car>) {
-        // Example of checking one turning scenario ("RU"), then replicating for others
-        if !self.has_turned && self.behavior_code == "RU" && self.car_rect.x <= 683. {
+        // Add complete turning logic for all cases
+        match self.behavior_code.as_str() {
+            "RU" => self.turn_right_up(temp_cars),
+            "RD" => self.turn_right_down(temp_cars),
+            "LU" => self.turn_left_up(temp_cars),
+            "LD" => self.turn_left_down(temp_cars),
+            "UR" => self.turn_up_right(temp_cars),
+            "UL" => self.turn_up_left(temp_cars),
+            "DR" => self.turn_down_right(temp_cars),
+            "DL" => self.turn_down_left(temp_cars),
+            _ => {} // Straight paths don't turn
+        }
+    }
+
+    // Add helper methods for turning
+    fn turn_right_up(&mut self, temp_cars: &Vec<Car>) {
+        if !self.has_turned && self.car_rect.x <= 683. {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
@@ -374,9 +390,7 @@ impl Car {
             );
 
             for other_car in temp_cars {
-                if self.id != other_car.id
-                    && temp_rect.intersect(other_car.car_rect).is_some()
-                {
+                if self.id != other_car.id && temp_rect.intersect(other_car.car_rect).is_some() {
                     clear_to_turn = false;
                 }
             }
@@ -387,9 +401,188 @@ impl Car {
                 self.has_turned = true;
             }
         }
+    }
 
-        // ... replicate your turning logic for the other cases ...
-        // e.g. "RD", "DR", "DL", "LD", "LU", "UL", "UR", etc.
+    fn turn_right_down(&mut self, temp_cars: &Vec<Car>) {
+        if !self.has_turned && self.car_rect.x <= 683. {
+            self.waiting_flag = true;
+            let mut clear_to_turn = true;
+
+            let temp_rect = FRect::new(
+                683.,
+                self.car_rect.y,
+                self.car_rect.h,
+                self.car_rect.w,
+            );
+
+            for other_car in temp_cars {
+                if self.id != other_car.id && temp_rect.intersect(other_car.car_rect).is_some() {
+                    clear_to_turn = false;
+                }
+            }
+            if clear_to_turn {
+                self.car_rect = temp_rect;
+                self.waiting_flag = false;
+                self.current_direction = "South".to_string();
+                self.has_turned = true;
+            }
+        }
+    }
+
+    fn turn_left_up(&mut self, temp_cars: &Vec<Car>) {
+        if !self.has_turned && self.car_rect.x >= 517. {
+            self.waiting_flag = true;
+            let mut clear_to_turn = true;
+
+            let temp_rect = FRect::new(
+                517.,
+                self.car_rect.y - (self.car_rect.w - self.car_rect.h).abs(),
+                self.car_rect.h,
+                self.car_rect.w,
+            );
+
+            for other_car in temp_cars {
+                if self.id != other_car.id && temp_rect.intersect(other_car.car_rect).is_some() {
+                    clear_to_turn = false;
+                }
+            }
+            if clear_to_turn {
+                self.car_rect = temp_rect;
+                self.waiting_flag = false;
+                self.current_direction = "North".to_string();
+                self.has_turned = true;
+            }
+        }
+    }
+
+    fn turn_left_down(&mut self, temp_cars: &Vec<Car>) {
+        if !self.has_turned && self.car_rect.x >= 517. {
+            self.waiting_flag = true;
+            let mut clear_to_turn = true;
+
+            let temp_rect = FRect::new(
+                517.,
+                self.car_rect.y,
+                self.car_rect.h,
+                self.car_rect.w,
+            );
+
+            for other_car in temp_cars {
+                if self.id != other_car.id && temp_rect.intersect(other_car.car_rect).is_some() {
+                    clear_to_turn = false;
+                }
+            }
+            if clear_to_turn {
+                self.car_rect = temp_rect;
+                self.waiting_flag = false;
+                self.current_direction = "South".to_string();
+                self.has_turned = true;
+            }
+        }
+    }
+
+    fn turn_up_right(&mut self, temp_cars: &Vec<Car>) {
+        if !self.has_turned && self.car_rect.y >= 517. {
+            self.waiting_flag = true;
+            let mut clear_to_turn = true;
+
+            let temp_rect = FRect::new(
+                self.car_rect.x,
+                517.,
+                self.car_rect.h,
+                self.car_rect.w,
+            );
+
+            for other_car in temp_cars {
+                if self.id != other_car.id && temp_rect.intersect(other_car.car_rect).is_some() {
+                    clear_to_turn = false;
+                }
+            }
+            if clear_to_turn {
+                self.car_rect = temp_rect;
+                self.waiting_flag = false;
+                self.current_direction = "East".to_string();
+                self.has_turned = true;
+            }
+        }
+    }
+
+    fn turn_up_left(&mut self, temp_cars: &Vec<Car>) {
+        if !self.has_turned && self.car_rect.y >= 517. {
+            self.waiting_flag = true;
+            let mut clear_to_turn = true;
+
+            let temp_rect = FRect::new(
+                self.car_rect.x - (self.car_rect.w - self.car_rect.h).abs(),
+                517.,
+                self.car_rect.h,
+                self.car_rect.w,
+            );
+
+            for other_car in temp_cars {
+                if self.id != other_car.id && temp_rect.intersect(other_car.car_rect).is_some() {
+                    clear_to_turn = false;
+                }
+            }
+            if clear_to_turn {
+                self.car_rect = temp_rect;
+                self.waiting_flag = false;
+                self.current_direction = "West".to_string();
+                self.has_turned = true;
+            }
+        }
+    }
+
+    fn turn_down_right(&mut self, temp_cars: &Vec<Car>) {
+        if !self.has_turned && self.car_rect.y <= 683. {
+            self.waiting_flag = true;
+            let mut clear_to_turn = true;
+
+            let temp_rect = FRect::new(
+                self.car_rect.x,
+                683.,
+                self.car_rect.h,
+                self.car_rect.w,
+            );
+
+            for other_car in temp_cars {
+                if self.id != other_car.id && temp_rect.intersect(other_car.car_rect).is_some() {
+                    clear_to_turn = false;
+                }
+            }
+            if clear_to_turn {
+                self.car_rect = temp_rect;
+                self.waiting_flag = false;
+                self.current_direction = "East".to_string();
+                self.has_turned = true;
+            }
+        }
+    }
+
+    fn turn_down_left(&mut self, temp_cars: &Vec<Car>) {
+        if !self.has_turned && self.car_rect.y <= 683. {
+            self.waiting_flag = true;
+            let mut clear_to_turn = true;
+
+            let temp_rect = FRect::new(
+                self.car_rect.x - (self.car_rect.w - self.car_rect.h).abs(),
+                683.,
+                self.car_rect.h,
+                self.car_rect.w,
+            );
+
+            for other_car in temp_cars {
+                if self.id != other_car.id && temp_rect.intersect(other_car.car_rect).is_some() {
+                    clear_to_turn = false;
+                }
+            }
+            if clear_to_turn {
+                self.car_rect = temp_rect;
+                self.waiting_flag = false;
+                self.current_direction = "West".to_string();
+                self.has_turned = true;
+            }
+        }
     }
 
     /// Draw the car, radar, and/or debugging overlay using SDL2.
