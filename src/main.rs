@@ -83,6 +83,17 @@ fn get_random_behavior_for_direction(direction: &str) -> &'static str {
         _ => panic!("Invalid direction"),
     }
 }
+// XXX debug, remove at submission
+fn draw_intersection_bounds(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
+    let intersection_rect = sdl2::rect::Rect::new(
+        (4 * LINE_SPACING) as i32,
+        (4 * LINE_SPACING) as i32,
+        (6 * LINE_SPACING) as u32,
+        (6 * LINE_SPACING) as u32,
+    );
+    canvas.set_draw_color(Color::RGB(255, 0, 0));
+    canvas.draw_rect(intersection_rect).unwrap();
+}
 
 fn render_simulation(
     canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
@@ -99,6 +110,7 @@ fn render_simulation(
     let car_texture = texture_creator.load_texture("assets/car.png").expect("Could not load car texture");
     
     draw_lines(canvas);
+    draw_intersection_bounds(canvas); // Draw the intersection bounds
 
     // Define intersection area
     let core_intersection = FRect::new(
@@ -188,6 +200,9 @@ fn render_simulation(
 
             i += 1;
         }
+
+        // Draw the intersection bounds
+        draw_intersection_bounds(canvas);
 
         // Remove cars that have reached their destination
         cars.retain(|car| {
