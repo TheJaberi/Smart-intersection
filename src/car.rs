@@ -123,11 +123,11 @@ impl Car {
             // Left side spawns (x = 50, y = different lanes)
             "LU" => Vec2::new(
                 50.,
-                (LINE_SPACING * 8) as f32 + lane_center_h
+                (LINE_SPACING * 7) as f32 + lane_center_h
             ),
             "LR" => Vec2::new(
                 50.,
-                (LINE_SPACING * 7) as f32 + lane_center_h
+                (LINE_SPACING * 8) as f32 + lane_center_h
             ),
             "LD" => Vec2::new(
                 50.,
@@ -165,25 +165,61 @@ impl Car {
             RADAR_SIZE.y,
         );
 
-        // Destination point based on behavior
+        // Destination point based on behavior - using LINE_SPACING for consistency
         let dest_point = match randomized_behavior {
-            "RU" => Vec2::new(683., 100.),
-            "RL" => Vec2::new(100., 535.),
-            "RD" => Vec2::new(555., 1050.),
-            "DU" => Vec2::new(643., 100.),
-            "DL" => Vec2::new(100., 574.),
-            "DR" => Vec2::new(1057., 695.),
-            "LU" => Vec2::new(593., 100.),
-            "LR" => Vec2::new(1057., 655.),
-            "LD" => Vec2::new(567., 1050.),
-            "UD" => Vec2::new(516., 1050.),
-            "UR" => Vec2::new(1057., 607.),
-            "UL" => Vec2::new(100., 485.),
+            "RU" => Vec2::new(
+                (LINE_SPACING * 7) as f32,
+                50.
+            ),
+            "RL" => Vec2::new(
+                50.,
+                (LINE_SPACING * 5) as f32 + lane_center_h
+            ),
+            "RD" => Vec2::new(
+                (LINE_SPACING * 7) as f32,
+                (WINDOW_SIZE - 50) as f32
+            ),
+            "DU" => Vec2::new(
+                (LINE_SPACING * 8) as f32 + lane_center_v,
+                50.
+            ),
+            "DL" => Vec2::new(
+                50.,
+                (LINE_SPACING * 7) as f32 + lane_center_h
+            ),
+            "DR" => Vec2::new(
+                (WINDOW_SIZE - 50) as f32,
+                (LINE_SPACING * 7) as f32 + lane_center_h
+            ),
+            "LU" => Vec2::new(
+                (LINE_SPACING * 7) as f32,
+                50.
+            ),
+            "LR" => Vec2::new(
+                (WINDOW_SIZE - 50) as f32,
+                (LINE_SPACING * 7) as f32 + lane_center_h
+            ),
+            "LD" => Vec2::new(
+                (LINE_SPACING * 7) as f32,
+                (WINDOW_SIZE - 50) as f32
+            ),
+            "UD" => Vec2::new(
+                (LINE_SPACING * 5) as f32 + lane_center_v,
+                (WINDOW_SIZE - 50) as f32
+            ),
+            "UR" => Vec2::new(
+                (WINDOW_SIZE - 50) as f32,
+                (LINE_SPACING * 5) as f32 + lane_center_h
+            ),
+            "UL" => Vec2::new(
+                50.,
+                (LINE_SPACING * 5) as f32 + lane_center_h
+            ),
             _ => panic!("Unexpected lane"),
         };
 
         Car {
-            id,  // Use provided id instead of UUID
+            id, 
             lifetime: Instant::now(),
             spawn_point: spawning,
             car_rect,
@@ -424,14 +460,16 @@ impl Car {
         }
     }
 
-    // Add helper methods for turning
+    /// From: Right lane moving West
+    /// To: Upper lane moving North
     fn turn_right_up(&mut self, temp_cars: &Vec<Car>) {
-        if !self.has_turned && self.car_rect.x <= 683. {
+        // Change turning point to use LINE_SPACING * 9
+        if !self.has_turned && self.car_rect.x <= (LINE_SPACING * 9) as f32 {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
             let temp_rect = FRect::new(
-                683.,
+                (LINE_SPACING * 9) as f32,
                 self.car_rect.y - (self.car_rect.w - self.car_rect.h).abs(),
                 self.car_rect.h,
                 self.car_rect.w,
@@ -451,13 +489,16 @@ impl Car {
         }
     }
 
+    /// From: Right lane moving West
+    /// To: Lower lane moving South
     fn turn_right_down(&mut self, temp_cars: &Vec<Car>) {
-        if !self.has_turned && self.car_rect.x <= 683. {
+        // Use same LINE_SPACING * 9 for consistency
+        if !self.has_turned && self.car_rect.x <= (LINE_SPACING * 6) as f32 {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
             let temp_rect = FRect::new(
-                683.,
+                (LINE_SPACING * 6) as f32,
                 self.car_rect.y,
                 self.car_rect.h,
                 self.car_rect.w,
@@ -477,13 +518,15 @@ impl Car {
         }
     }
 
+    /// From: Left lane moving East
+    /// To: Upper lane moving North
     fn turn_left_up(&mut self, temp_cars: &Vec<Car>) {
-        if !self.has_turned && self.car_rect.x >= 517. {
+        if !self.has_turned && self.car_rect.x >= (LINE_SPACING * 7) as f32 {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
             let temp_rect = FRect::new(
-                517.,
+                (LINE_SPACING * 7) as f32,
                 self.car_rect.y - (self.car_rect.w - self.car_rect.h).abs(),
                 self.car_rect.h,
                 self.car_rect.w,
@@ -503,13 +546,15 @@ impl Car {
         }
     }
 
+    /// From: Left lane moving East
+    /// To: Lower lane moving South
     fn turn_left_down(&mut self, temp_cars: &Vec<Car>) {
-        if !self.has_turned && self.car_rect.x >= 517. {
+        if !self.has_turned && self.car_rect.x >= (LINE_SPACING * 7) as f32 {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
             let temp_rect = FRect::new(
-                517.,
+                (LINE_SPACING * 7) as f32,
                 self.car_rect.y,
                 self.car_rect.h,
                 self.car_rect.w,
@@ -529,14 +574,16 @@ impl Car {
         }
     }
 
+    /// From: Upper lane moving South
+    /// To: Right lane moving East
     fn turn_up_right(&mut self, temp_cars: &Vec<Car>) {
-        if !self.has_turned && self.car_rect.y >= 517. {
+        if !self.has_turned && self.car_rect.y >= (LINE_SPACING * 7) as f32 {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
             let temp_rect = FRect::new(
                 self.car_rect.x,
-                517.,
+                (LINE_SPACING * 7) as f32,
                 self.car_rect.h,
                 self.car_rect.w,
             );
@@ -555,14 +602,16 @@ impl Car {
         }
     }
 
+    /// From: Upper lane moving South
+    /// To: Left lane moving West
     fn turn_up_left(&mut self, temp_cars: &Vec<Car>) {
-        if !self.has_turned && self.car_rect.y >= 517. {
+        if !self.has_turned && self.car_rect.y >= (LINE_SPACING * 7) as f32 {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
             let temp_rect = FRect::new(
                 self.car_rect.x - (self.car_rect.w - self.car_rect.h).abs(),
-                517.,
+                (LINE_SPACING * 7) as f32,
                 self.car_rect.h,
                 self.car_rect.w,
             );
@@ -581,14 +630,16 @@ impl Car {
         }
     }
 
+    /// From: Lower lane moving North
+    /// To: Right lane moving East
     fn turn_down_right(&mut self, temp_cars: &Vec<Car>) {
-        if !self.has_turned && self.car_rect.y <= 683. {
+        if !self.has_turned && self.car_rect.y <= (LINE_SPACING * 7) as f32 {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
             let temp_rect = FRect::new(
                 self.car_rect.x,
-                683.,
+                (LINE_SPACING * 7) as f32,
                 self.car_rect.h,
                 self.car_rect.w,
             );
@@ -607,14 +658,16 @@ impl Car {
         }
     }
 
+    /// From: Lower lane moving North
+    /// To: Left lane moving West
     fn turn_down_left(&mut self, temp_cars: &Vec<Car>) {
-        if !self.has_turned && self.car_rect.y <= 683. {
+        if !self.has_turned && self.car_rect.y <= (LINE_SPACING * 7) as f32 {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
             let temp_rect = FRect::new(
                 self.car_rect.x - (self.car_rect.w - self.car_rect.h).abs(),
-                683.,
+                (LINE_SPACING * 7) as f32,
                 self.car_rect.h,
                 self.car_rect.w,
             );
