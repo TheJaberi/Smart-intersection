@@ -293,13 +293,13 @@ impl Car {
         // For brevity, not reproducing all, but you can copy/paste the same if-blocks.
     }
 
-    /// Check if we collided with any Car in `temp_cars`.
-    pub fn check_for_collision(&self, temp_cars: &mut Vec<Car>) -> bool {
-        temp_cars.retain(|temp_car| temp_car.id != self.id);
-        temp_cars
-            .iter()
-            .any(|temp_car| temp_car.car_rect.intersect(self.car_rect).is_some())
-    }
+    // Remove unused check_for_collision method
+    // pub fn check_for_collision(&self, temp_cars: &mut Vec<Car>) -> bool {
+    //     temp_cars.retain(|temp_car| temp_car.id != self.id);
+    //     temp_cars
+    //         .iter()
+    //         .any(|temp_car| temp_car.car_rect.intersect(self.car_rect).is_some())
+    // }
 
     /// Move one step in the current direction if it doesn't cause a collision.
     pub fn move_one_step_if_no_collide(&mut self, temp_cars: &mut Vec<Car>) {

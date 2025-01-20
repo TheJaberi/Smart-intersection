@@ -45,6 +45,7 @@ pub fn main() {
 
 fn spawn_car_with_direction(cars: &mut Vec<Car>, next_id: u32, behavior: &str, direction: &str) {
     Car::spawn_if_can(cars, next_id, behavior, direction);
+    increment_spawn_count();
 }
 
 fn spawn_random_car(cars: &mut Vec<Car>, next_id: u32) {
@@ -57,6 +58,7 @@ fn spawn_random_car(cars: &mut Vec<Car>, next_id: u32) {
     ];
     let (behavior, direction) = behaviors[rng.gen_range(0..behaviors.len())];
     Car::spawn_if_can(cars, next_id, behavior, direction);
+    increment_spawn_count();
 }
 
 fn get_random_behavior_for_direction(direction: &str) -> &'static str {
@@ -162,27 +164,27 @@ fn render_simulation(
         while i < cars.len() {
             let mut temp_cars = cars.clone();
             
-            // Update car
+            // Update car speed and check for close calls
             cars[i].update_radar(i, &temp_cars);
+            let previous_speed = cars[i].current_speed;
             cars[i].adjust_current_speed();
+            
+            // Count as close call if speed drops significantly or stops
+            if (previous_speed > 0.0 && cars[i].current_speed == 0.0) || 
+               (previous_speed > cars[i].current_speed * 2.0) {
+                increment_close_call_count();
+            }
+            
             cars[i].communicate_with_intersection(&temp_cars, &core_intersection);
             cars[i].turn_if_can(&temp_cars);
             cars[i].move_one_step_if_no_collide(&mut temp_cars);
             
             // Track metrics
             update_vehicle_speed(cars[i].current_speed);
-            if !cars[i].has_turned {
-                update_intersection_time(cars[i].lifetime.elapsed().as_secs_f32());
-            }
             
             // Draw car
             cars[i].draw_all_components(canvas, &car_texture, true)
                 .expect("Failed to draw car");
-
-            // Check for collisions
-            if cars[i].check_for_collision(&mut temp_cars) {
-                increment_close_call_count();
-            }
 
             i += 1;
         }
@@ -191,7 +193,8 @@ fn render_simulation(
         cars.retain(|car| {
             let distance_to_dest = Vec2::new(car.car_rect.x, car.car_rect.y)
                 .distance(car.dest_point);
-            if distance_to_dest < 10.0 {
+            if distance_to_dest < 20.0 {
+                update_intersection_time(car.lifetime.elapsed().as_secs_f32());
                 increment_vehicle_count();
                 false
             } else {
@@ -212,97 +215,35 @@ fn render_metrics(
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 
-    let metrics = get_metrics();
+    let (title, stats) = get_metrics_display();
 
+    // Draw title
     draw_text(
         &canvas.texture_creator(),
         "assets/Roboto-Regular.ttf",
         48,
-        "Simulation Stopped",
+        &title,
         Color::RGB(255, 255, 255),
         WINDOW_SIZE as i32 / 2 - 200,
         100,
         &mut canvas,
         &ttf_context,
-    )
-    .unwrap();
+    ).unwrap();
 
-    draw_text(
-        &canvas.texture_creator(),
-        "assets/Roboto-Regular.ttf",
-        32,
-        format!("Vehicles passed: {}", metrics.vehicle_count).as_str(),
-        Color::RGB(255, 255, 255),
-        WINDOW_SIZE as i32 / 2 - 200,
-        150,
-        &mut canvas,
-        &ttf_context,
-    )
-    .unwrap();
-    draw_text(
-        &canvas.texture_creator(),
-        "assets/Roboto-Regular.ttf",
-        32,
-        format!("Max Vehicle Velocity: {}", metrics.max_vehicle_speed).as_str(),
-        Color::RGB(255, 255, 255),
-        WINDOW_SIZE as i32 / 2 - 200,
-        200,
-        &mut canvas,
-        &ttf_context,
-    )
-    .unwrap();
-
-    draw_text(
-        &canvas.texture_creator(),
-        "assets/Roboto-Regular.ttf",
-        32,
-        format!("Min Vehicle Velocity: {}", metrics.min_vehicle_speed).as_str(),
-        Color::RGB(255, 255, 255),
-        WINDOW_SIZE as i32 / 2 - 200,
-        250,
-        &mut canvas,
-        &ttf_context,
-    )
-    .unwrap();
-
-    draw_text(
-        &canvas.texture_creator(),
-        "assets/Roboto-Regular.ttf",
-        32,
-        format!("Max Time to Pass: {}", metrics.max_intersection_pass_time).as_str(),
-        Color::RGB(255, 255, 255),
-        WINDOW_SIZE as i32 / 2 - 200,
-        300,
-        &mut canvas,
-        &ttf_context,
-    )
-    .unwrap();
-
-    draw_text(
-        &canvas.texture_creator(),
-        "assets/Roboto-Regular.ttf",
-        32,
-        format!("Min Time to Pass: {}", metrics.min_intersection_pass_time).as_str(),
-        Color::RGB(255, 255, 255),
-        WINDOW_SIZE as i32 / 2 - 200,
-        350,
-        &mut canvas,
-        &ttf_context,
-    )
-    .unwrap();
-
-    draw_text(
-        &canvas.texture_creator(),
-        "assets/Roboto-Regular.ttf",
-        32,
-        format!("Close Calls: {}", metrics.close_call_count).as_str(),
-        Color::RGB(255, 255, 255),
-        WINDOW_SIZE as i32 / 2 - 200,
-        400,
-        &mut canvas,
-        &ttf_context,
-    )
-    .unwrap();
+    // Draw stats
+    for (i, stat) in stats.iter().enumerate() {
+        draw_text(
+            &canvas.texture_creator(),
+            "assets/Roboto-Regular.ttf",
+            32,
+            stat,
+            Color::RGB(255, 255, 255),
+            WINDOW_SIZE as i32 / 2 - 200,
+            150 + (i as i32 * 50),
+            &mut canvas,
+            &ttf_context,
+        ).unwrap();
+    }
 
     canvas.present();
 
