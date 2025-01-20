@@ -9,7 +9,8 @@ use metrics::*;  // Changed to import all metrics functions
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-// Remove unused Instant import
+use std::time::Instant;
+use std::time::Duration;
 use text::draw_text;
 use crate::car::{Car, FRect, Vec2};  // Add FRect and Vec2 imports
 use rand::Rng;
@@ -88,6 +89,8 @@ fn render_simulation(
     let mut is_random_generation = false;
     let mut next_id: u32 = 0;
     let mut cars: Vec<Car> = Vec::new();
+    let mut last_spawn_time = Instant::now();
+    let spawn_delay = Duration::from_millis(500); // Spawn every 500ms
 
     // Create texture for cars
     let texture_creator = canvas.texture_creator();
@@ -133,15 +136,20 @@ fn render_simulation(
                     next_id += 1;
                     increment_vehicle_count();
                 }
-                Event::KeyDown { keycode: Some(Keycode::R), .. } => is_random_generation = !is_random_generation,
+                Event::KeyDown { keycode: Some(Keycode::R), .. } => {
+                    is_random_generation = !is_random_generation;
+                    last_spawn_time = Instant::now(); // Reset spawn timer when toggling
+                }
                 _ => {}
             }
         }
 
-        if is_random_generation && rand::random::<f32>() < 0.02 {
+        // Controlled random generation with timing
+        if is_random_generation && last_spawn_time.elapsed() >= spawn_delay {
             spawn_random_car(&mut cars, next_id);
             next_id += 1;
-            increment_vehicle_count();  // Add metrics tracking
+            increment_vehicle_count();
+            last_spawn_time = Instant::now();
         }
 
         // Clear and draw background
