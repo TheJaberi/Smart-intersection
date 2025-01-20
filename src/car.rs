@@ -549,12 +549,12 @@ impl Car {
     /// From: Left lane moving East
     /// To: Lower lane moving South
     fn turn_left_down(&mut self, temp_cars: &Vec<Car>) {
-        if !self.has_turned && self.car_rect.x >= (LINE_SPACING * 7) as f32 {
+        if !self.has_turned && self.car_rect.x >= (LINE_SPACING * 4) as f32 {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
             let temp_rect = FRect::new(
-                (LINE_SPACING * 7) as f32,
+                (LINE_SPACING * 4) as f32,
                 self.car_rect.y,
                 self.car_rect.h,
                 self.car_rect.w,
@@ -605,13 +605,13 @@ impl Car {
     /// From: Upper lane moving South
     /// To: Left lane moving West
     fn turn_up_left(&mut self, temp_cars: &Vec<Car>) {
-        if !self.has_turned && self.car_rect.y >= (LINE_SPACING * 7) as f32 {
+        if !self.has_turned && self.car_rect.y >= (LINE_SPACING * 4) as f32 {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
             let temp_rect = FRect::new(
                 self.car_rect.x - (self.car_rect.w - self.car_rect.h).abs(),
-                (LINE_SPACING * 7) as f32,
+                (LINE_SPACING * 4) as f32,
                 self.car_rect.h,
                 self.car_rect.w,
             );
@@ -633,13 +633,13 @@ impl Car {
     /// From: Lower lane moving North
     /// To: Right lane moving East
     fn turn_down_right(&mut self, temp_cars: &Vec<Car>) {
-        if !self.has_turned && self.car_rect.y <= (LINE_SPACING * 7) as f32 {
+        if !self.has_turned && self.car_rect.y <= (LINE_SPACING * 9) as f32 {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
             let temp_rect = FRect::new(
                 self.car_rect.x,
-                (LINE_SPACING * 7) as f32,
+                (LINE_SPACING * 9) as f32,
                 self.car_rect.h,
                 self.car_rect.w,
             );
@@ -661,13 +661,13 @@ impl Car {
     /// From: Lower lane moving North
     /// To: Left lane moving West
     fn turn_down_left(&mut self, temp_cars: &Vec<Car>) {
-        if !self.has_turned && self.car_rect.y <= (LINE_SPACING * 7) as f32 {
+        if !self.has_turned && self.car_rect.y <= (LINE_SPACING * 6) as f32 {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
             let temp_rect = FRect::new(
                 self.car_rect.x - (self.car_rect.w - self.car_rect.h).abs(),
-                (LINE_SPACING * 7) as f32,
+                (LINE_SPACING * 6) as f32,
                 self.car_rect.h,
                 self.car_rect.w,
             );
