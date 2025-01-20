@@ -1,18 +1,19 @@
 mod constants;
-mod direction;
 mod image;
 mod metrics;
-mod car;
 mod text;
+mod car;
 use constants::*;
-use direction::Direction;
 use image::draw_image;
-use metrics::get_metrics;
+use metrics::*;  // Changed to import all metrics functions
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use std::time::Instant;
+// Remove unused Instant import
 use text::draw_text;
+use crate::car::Car;
+use rand::Rng;
+use sdl2::image::LoadTexture;
 
 pub fn main() {
     let sdl_context = sdl2::init().expect("Failed to initialize SDL2");
@@ -41,73 +42,101 @@ pub fn main() {
     render_metrics(&mut canvas, &mut event_pump, &ttf_context);
 }
 
+fn spawn_car_with_direction(cars: &mut Vec<Car>, next_id: u32, behavior: &str, direction: &str) {
+    Car::spawn_if_can(cars, next_id, behavior, direction);
+}
+
+fn spawn_random_car(cars: &mut Vec<Car>, next_id: u32) {
+    let mut rng = rand::thread_rng();
+    let behaviors = [
+        ("RU", "West"), ("RL", "West"), ("RD", "West"),
+        ("DU", "North"), ("DL", "North"), ("DR", "North"),
+        ("LU", "East"), ("LR", "East"), ("LD", "East"),
+        ("UD", "South"), ("UR", "South"), ("UL", "South"),
+    ];
+    let (behavior, direction) = behaviors[rng.gen_range(0..behaviors.len())];
+    Car::spawn_if_can(cars, next_id, behavior, direction);
+}
 
 fn render_simulation(
-    mut canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
+    canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
     event_pump: &mut sdl2::EventPump,
 ) {
     let mut is_random_generation = false;
-    let mut next_id: u32 = 0; // Track the next ID to assign
+    let mut next_id: u32 = 0;
+    let mut cars: Vec<Car> = Vec::new();
 
-    draw_lines(&mut canvas);
+    // Create texture for cars
+    let texture_creator = canvas.texture_creator();
+    let car_texture = texture_creator.load_texture("assets/car.png").expect("Could not load car texture");
+    
+    draw_lines(canvas);
 
     'simulation_loop: loop {
         // Handle events
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } => std::process::exit(0),
-                Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => break 'simulation_loop,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Up),
-                    ..
-                } => {
+                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'simulation_loop,
+                Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
+                    spawn_car_with_direction(&mut cars, next_id, "UD", "South");
                     next_id += 1;
-                    // spawn_square_with_direction(&mut squares, Direction::Down, Direction::Up, next_id);
+                    increment_vehicle_count();  // Add metrics tracking
                 }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Down),
-                    ..
-                } => {
+                Event::KeyDown { keycode: Some(Keycode::Down), .. } => {
+                    spawn_car_with_direction(&mut cars, next_id, "DU", "North");
                     next_id += 1;
-                    // spawn_square_with_direction(&mut squares, Direction::Up, Direction::Down, next_id);
                 }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Left),
-                    ..
-                } => {
+                Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
+                    spawn_car_with_direction(&mut cars, next_id, "LR", "East");
                     next_id += 1;
-                    // spawn_square_with_direction(&mut squares, Direction::Right, Direction::Left, next_id);
                 }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Right),
-                    ..
-                } => {
+                Event::KeyDown { keycode: Some(Keycode::Right), .. } => {
+                    spawn_car_with_direction(&mut cars, next_id, "RL", "West");
                     next_id += 1;
-                    // spawn_square_with_direction(&mut squares, Direction::Left, Direction::Right, next_id);
                 }
-                Event::KeyDown {
-                    keycode: Some(Keycode::R),
-                    ..
-                } => is_random_generation = !is_random_generation,
+                Event::KeyDown { keycode: Some(Keycode::R), .. } => is_random_generation = !is_random_generation,
                 _ => {}
             }
         }
-        
-        // Render
+
+        if is_random_generation && rand::random::<f32>() < 0.02 {
+            spawn_random_car(&mut cars, next_id);
+            next_id += 1;
+            increment_vehicle_count();  // Add metrics tracking
+        }
+
+        // Clear and draw background
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
-        draw_lines(&mut canvas);
+        draw_lines(canvas);
+
+        // Draw and update all cars
+        let mut i = 0;
+        while i < cars.len() {
+            let mut temp_cars = cars.clone();
+            
+            // Update car
+            cars[i].update_radar(i, &temp_cars);
+            cars[i].adjust_current_speed();
+            cars[i].move_one_step_if_no_collide(&mut temp_cars);
+            
+            // Draw car
+            cars[i].draw_all_components(canvas, &car_texture, true)
+                .expect("Failed to draw car");
+
+            // Check for collisions
+            if cars[i].check_for_collision(&mut temp_cars) {
+                increment_close_call_count();
+            }
+
+            i += 1;
+        }
 
         canvas.present();
-
-        // Control frame rate
         std::thread::sleep(FRAME_DURATION);
     }
 }
-
 
 fn render_metrics(
     mut canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,

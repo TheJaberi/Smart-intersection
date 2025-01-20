@@ -1,7 +1,6 @@
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::TextureCreator;
-use sdl2::ttf::Font;
 use sdl2::ttf::Sdl2TtfContext;
 use sdl2::video::WindowContext;
 
