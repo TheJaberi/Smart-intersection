@@ -58,6 +58,29 @@ fn spawn_random_car(cars: &mut Vec<Car>, next_id: u32) {
     Car::spawn_if_can(cars, next_id, behavior, direction);
 }
 
+fn get_random_behavior_for_direction(direction: &str) -> &'static str {
+    let mut rng = rand::thread_rng();
+    match direction {
+        "West" => {
+            let behaviors = ["RU", "RL", "RD"];
+            behaviors[rng.gen_range(0..behaviors.len())]
+        }
+        "North" => {
+            let behaviors = ["DU", "DL", "DR"];
+            behaviors[rng.gen_range(0..behaviors.len())]
+        }
+        "East" => {
+            let behaviors = ["LU", "LR", "LD"];
+            behaviors[rng.gen_range(0..behaviors.len())]
+        }
+        "South" => {
+            let behaviors = ["UD", "UR", "UL"];
+            behaviors[rng.gen_range(0..behaviors.len())]
+        }
+        _ => panic!("Invalid direction"),
+    }
+}
+
 fn render_simulation(
     canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
     event_pump: &mut sdl2::EventPump,
@@ -86,22 +109,29 @@ fn render_simulation(
             match event {
                 Event::Quit { .. } => std::process::exit(0),
                 Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'simulation_loop,
-                Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
-                    spawn_car_with_direction(&mut cars, next_id, "UD", "South");
+                Event::KeyDown { keycode: Some(Keycode::Right), .. } => {
+                    let behavior = get_random_behavior_for_direction("West");
+                    spawn_car_with_direction(&mut cars, next_id, behavior, "West");
                     next_id += 1;
-                    increment_vehicle_count();  // Add metrics tracking
-                }
-                Event::KeyDown { keycode: Some(Keycode::Down), .. } => {
-                    spawn_car_with_direction(&mut cars, next_id, "DU", "North");
-                    next_id += 1;
+                    increment_vehicle_count();
                 }
                 Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
-                    spawn_car_with_direction(&mut cars, next_id, "LR", "East");
+                    let behavior = get_random_behavior_for_direction("East");
+                    spawn_car_with_direction(&mut cars, next_id, behavior, "East");
                     next_id += 1;
+                    increment_vehicle_count();
                 }
-                Event::KeyDown { keycode: Some(Keycode::Right), .. } => {
-                    spawn_car_with_direction(&mut cars, next_id, "RL", "West");
+                Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
+                    let behavior = get_random_behavior_for_direction("South");
+                    spawn_car_with_direction(&mut cars, next_id, behavior, "South");
                     next_id += 1;
+                    increment_vehicle_count();
+                }
+                Event::KeyDown { keycode: Some(Keycode::Down), .. } => {
+                    let behavior = get_random_behavior_for_direction("North");
+                    spawn_car_with_direction(&mut cars, next_id, behavior, "North");
+                    next_id += 1;
+                    increment_vehicle_count();
                 }
                 Event::KeyDown { keycode: Some(Keycode::R), .. } => is_random_generation = !is_random_generation,
                 _ => {}

@@ -3,6 +3,7 @@ use sdl2::render::{Texture, WindowCanvas};
 use sdl2::rect::Rect as SdlRect;
 use sdl2::render::BlendMode;
 use std::time::Instant;
+use crate::constants::*;
 
 /// A simple 2D vector for float values
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -83,22 +84,69 @@ impl Car {
     /// Create a new Car with some randomized behavior, direction, spawn points, etc.
     pub fn new(id: u32, randomized_behavior: &str, initial_direction: &str) -> Self {
         let mut rng = rand::thread_rng();
-        let random_speed = rng.gen_range(1.5..3.0);  // Increased speed range
+        let random_speed = rng.gen_range(1.5..3.0);
 
-        // Update spawn points to match window size
+        // Calculate lane center offset (half of LINE_SPACING minus half of car width/height)
+        let lane_center_h = (LINE_SPACING as f32 / 2.0) - (CAR_SIZE.y / 2.75);
+        let lane_center_v = (LINE_SPACING as f32 / 2.0) - (CAR_SIZE.x / 2.75);
+
+        // Update spawn points to match window size using LINE_SPACING
         let spawning = match randomized_behavior {
-            "RU" => Vec2::new(1150., 495.),  // Adjusted x coordinate
-            "RL" => Vec2::new(1150., 535.),
-            "RD" => Vec2::new(1150., 574.),
-            "DU" => Vec2::new(643., 1150.),  // Adjusted y coordinate
-            "DL" => Vec2::new(603., 1150.),
-            "DR" => Vec2::new(683., 1150.),
-            "LU" => Vec2::new(50., 617.),   // Adjusted x coordinate
-            "LR" => Vec2::new(50., 655.),
-            "LD" => Vec2::new(50., 695.),
-            "UD" => Vec2::new(516., 50.),   // Adjusted y coordinate
-            "UR" => Vec2::new(558., 50.),
-            "UL" => Vec2::new(477., 50.),
+            // Right side spawns (x = window edge, y = different lanes)
+            "RU" => Vec2::new(
+                (WINDOW_SIZE - 50) as f32,
+                (LINE_SPACING * 4) as f32 + lane_center_h
+            ),
+            "RL" => Vec2::new(
+                (WINDOW_SIZE - 50) as f32,
+                (LINE_SPACING * 5) as f32 + lane_center_h
+            ),
+            "RD" => Vec2::new(
+                (WINDOW_SIZE - 50) as f32,
+                (LINE_SPACING * 6) as f32 + lane_center_h
+            ),
+            
+            // Down side spawns (x = different lanes, y = window edge)
+            "DU" => Vec2::new(
+                (LINE_SPACING * 8) as f32 + lane_center_v,
+                (WINDOW_SIZE - 50) as f32
+            ),
+            "DL" => Vec2::new(
+                (LINE_SPACING * 7) as f32 + lane_center_v,
+                (WINDOW_SIZE - 50) as f32
+            ),
+            "DR" => Vec2::new(
+                (LINE_SPACING * 9) as f32 + lane_center_v,
+                (WINDOW_SIZE - 50) as f32
+            ),
+            
+            // Left side spawns (x = 50, y = different lanes)
+            "LU" => Vec2::new(
+                50.,
+                (LINE_SPACING * 8) as f32 + lane_center_h
+            ),
+            "LR" => Vec2::new(
+                50.,
+                (LINE_SPACING * 7) as f32 + lane_center_h
+            ),
+            "LD" => Vec2::new(
+                50.,
+                (LINE_SPACING * 9) as f32 + lane_center_h
+            ),
+            
+            // Up side spawns (x = different lanes, y = 50)
+            "UD" => Vec2::new(
+                (LINE_SPACING * 5) as f32 + lane_center_v,
+                50.
+            ),
+            "UR" => Vec2::new(
+                (LINE_SPACING * 6) as f32 + lane_center_v,
+                50.
+            ),
+            "UL" => Vec2::new(
+                (LINE_SPACING * 4) as f32 + lane_center_v,
+                50.
+            ),
             _ => panic!("Unexpected lane"),
         };
 
