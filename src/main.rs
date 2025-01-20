@@ -99,66 +99,96 @@ fn render_simulation(
     canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
     event_pump: &mut sdl2::EventPump,
 ) {
+    // --- 1) Variables that must persist across frames ---
     let mut is_random_generation = false;
     let mut next_id: u32 = 0;
     let mut cars: Vec<Car> = Vec::new();
     let mut last_spawn_time = Instant::now();
-    let spawn_delay = Duration::from_millis(500); // Spawn every 500ms
+    let spawn_delay = Duration::from_millis(500);
 
     // Create texture for cars
     let texture_creator = canvas.texture_creator();
-    let car_texture = texture_creator.load_texture("assets/car.png").expect("Could not load car texture");
-    
-    draw_lines(canvas);
-    draw_intersection_bounds(canvas); // Draw the intersection bounds
+    let car_texture = texture_creator
+        .load_texture("assets/car.png")
+        .expect("Could not load car texture");
 
     // Define intersection area
     let core_intersection = FRect::new(
+        (4 * LINE_SPACING) as f32,
+        (4 * LINE_SPACING) as f32,
         (6 * LINE_SPACING) as f32,
         (6 * LINE_SPACING) as f32,
-        (2 * LINE_SPACING) as f32,
-        (2 * LINE_SPACING) as f32,
     );
 
+    // --- 2) Main game loop ---
     'simulation_loop: loop {
-        // Handle events
+        // ---------------------------------------
+        // A) Handle events (keyboard, quit, etc.)
+        // ---------------------------------------
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit { .. } => std::process::exit(0),
-                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'simulation_loop,
-                Event::KeyDown { keycode: Some(Keycode::Right), .. } => {
+                // Quit or Escape
+                Event::Quit { .. }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => {
+                    break 'simulation_loop;
+                }
+
+                // Manually spawn with arrow keys
+                Event::KeyDown {
+                    keycode: Some(Keycode::Right),
+                    ..
+                } => {
                     let behavior = get_random_behavior_for_direction("West");
                     spawn_car_with_direction(&mut cars, next_id, behavior, "West");
                     next_id += 1;
                     increment_vehicle_count();
                 }
-                Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
+                Event::KeyDown {
+                    keycode: Some(Keycode::Left),
+                    ..
+                } => {
                     let behavior = get_random_behavior_for_direction("East");
                     spawn_car_with_direction(&mut cars, next_id, behavior, "East");
                     next_id += 1;
                     increment_vehicle_count();
                 }
-                Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
+                Event::KeyDown {
+                    keycode: Some(Keycode::Up),
+                    ..
+                } => {
                     let behavior = get_random_behavior_for_direction("South");
                     spawn_car_with_direction(&mut cars, next_id, behavior, "South");
                     next_id += 1;
                     increment_vehicle_count();
                 }
-                Event::KeyDown { keycode: Some(Keycode::Down), .. } => {
+                Event::KeyDown {
+                    keycode: Some(Keycode::Down),
+                    ..
+                } => {
                     let behavior = get_random_behavior_for_direction("North");
                     spawn_car_with_direction(&mut cars, next_id, behavior, "North");
                     next_id += 1;
                     increment_vehicle_count();
                 }
-                Event::KeyDown { keycode: Some(Keycode::R), .. } => {
+
+                // Toggle random generation with 'R'
+                Event::KeyDown {
+                    keycode: Some(Keycode::R),
+                    ..
+                } => {
                     is_random_generation = !is_random_generation;
-                    last_spawn_time = Instant::now(); // Reset spawn timer when toggling
+                    last_spawn_time = Instant::now();
                 }
                 _ => {}
             }
         }
 
-        // Controlled random generation with timing
+        // ---------------------------------------
+        // B) Random car spawning on a timer
+        // ---------------------------------------
         if is_random_generation && last_spawn_time.elapsed() >= spawn_delay {
             spawn_random_car(&mut cars, next_id);
             next_id += 1;
@@ -166,45 +196,75 @@ fn render_simulation(
             last_spawn_time = Instant::now();
         }
 
-        // Clear and draw background
+        // ---------------------------------------
+        // C) Clear the screen and draw the grid
+        // ---------------------------------------
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
         draw_lines(canvas);
+        draw_intersection_bounds(canvas); // optional debug intersection
 
-        // Draw and update all cars
-        let mut i = 0;
-        while i < cars.len() {
-            let mut temp_cars = cars.clone();
-            
-            // Update car speed and check for close calls
-            cars[i].update_radar(i, &temp_cars);
-            let previous_speed = cars[i].current_speed;
-            cars[i].adjust_current_speed();
-            
-            // Count as close call if speed drops significantly or stops
-            if (previous_speed > 0.0 && cars[i].current_speed == 0.0) || 
-               (previous_speed > cars[i].current_speed * 2.0) {
-                increment_close_call_count();
+        // Let each car set waiting flags, if needed
+        {
+            let temp_cars = cars.clone();
+            for car in cars.iter_mut() {
+                car.communicate_with_intersection(&temp_cars, &core_intersection);
             }
-            
-            cars[i].communicate_with_intersection(&temp_cars, &core_intersection);
-            cars[i].turn_if_can(&temp_cars);
-            cars[i].move_one_step_if_no_collide(&mut temp_cars);
-            
-            // Track metrics
-            update_vehicle_speed(cars[i].current_speed);
-            
-            // Draw car
-            cars[i].draw_all_components(canvas, &car_texture, true)
-                .expect("Failed to draw car");
-
-            i += 1;
         }
 
-        // Draw the intersection bounds
+        // ---------------------------------------
+        // D) First pass: Radar & Speed updates
+        // ---------------------------------------
+        {
+            let temp_cars = cars.clone();
+            for i in 0..cars.len() {
+                let previous_speed = cars[i].current_speed;
+
+                // 1) Radar + speed
+                cars[i].update_radar(i, &temp_cars);
+                cars[i].adjust_current_speed();
+
+                // 2) "Close call" detection
+                if (previous_speed > 0.0 && cars[i].current_speed == 0.0)
+                    || (previous_speed > cars[i].current_speed * 2.0)
+                {
+                    increment_close_call_count();
+                }
+
+                // 3) Turning logic
+                cars[i].turn_if_can(&temp_cars);
+
+                // 4) Track speed in metrics
+                update_vehicle_speed(cars[i].current_speed);
+            }
+        }
+
+        // ---------------------------------------
+        // E) Second pass: Move each car exactly once
+        // ---------------------------------------
+        {
+            let mut temp_cars = cars.clone();
+            for i in 0..cars.len() {
+                // Only move if not waiting
+                if !cars[i].waiting_flag {
+                    cars[i].move_one_step_if_no_collide(&mut temp_cars);
+                }
+            }
+        }
+
+        // ---------------------------------------
+        // F) Draw all cars
+        // ---------------------------------------
+        for car in &cars {
+            car.draw_all_components(canvas, &car_texture, true)
+               .expect("Failed to draw car");
+        }
+        // Optionally draw intersection bounds again
         draw_intersection_bounds(canvas);
 
-        // Remove cars that have reached their destination
+        // ---------------------------------------
+        // G) Remove cars that have reached destination
+        // ---------------------------------------
         cars.retain(|car| {
             let distance_to_dest = Vec2::new(car.car_rect.x, car.car_rect.y)
                 .distance(car.dest_point);
@@ -217,10 +277,12 @@ fn render_simulation(
             }
         });
 
+        // Present the frame and wait
         canvas.present();
         std::thread::sleep(FRAME_DURATION);
     }
 }
+
 
 fn render_metrics(
     mut canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,

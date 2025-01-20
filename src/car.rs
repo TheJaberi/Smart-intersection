@@ -84,7 +84,7 @@ impl Car {
     /// Create a new Car with some randomized behavior, direction, spawn points, etc.
     pub fn new(id: u32, randomized_behavior: &str, initial_direction: &str) -> Self {
         let mut rng = rand::thread_rng();
-        let random_speed = rng.gen_range(1.5..3.0);
+        let random_speed = rng.gen_range(0.8..2.0);
 
         // Calculate lane center offset (half of LINE_SPACING minus half of car width/height)
         let lane_center_h = (LINE_SPACING as f32 / 2.0) - (CAR_SIZE.y / 2.75);
@@ -272,40 +272,120 @@ impl Car {
         let mut temp_cars = cars_ref.clone();
         temp_cars.retain(|car| car.id != self.id);
 
-        // Example logic for a few behavior codes:
         if self.behavior_code == "LR"
             && self.radar.intersect(*core_intersection).is_some()
             && self.car_rect.intersect(*core_intersection).is_none()
         {
             self.waiting_flag = false;
-            // If any car with "LR" is already occupying the intersection, must wait
             if temp_cars.iter().any(|car| {
                 car.behavior_code == "LR" && car.car_rect.intersect(*core_intersection).is_some()
             }) {
                 self.waiting_flag = true;
+                // println!("Car {} is waiting before the intersection (LR)", self.id);
+            }
+        }
+        if self.behavior_code == "LU"
+            && self.radar.intersect(*core_intersection).is_some()
+            && self.car_rect.intersect(*core_intersection).is_none()
+        {
+            self.waiting_flag = false;
+            if temp_cars.iter().any(|car| {
+                car.behavior_code == "LU" && car.car_rect.intersect(*core_intersection).is_some()
+            }) {
+                self.waiting_flag = true;
+                // println!("Car {} is waiting before the intersection (LU)", self.id);
+            }
+        }
+        if self.behavior_code == "RD"
+            && self.radar.intersect(*core_intersection).is_some()
+            && self.car_rect.intersect(*core_intersection).is_none()
+        {
+            self.waiting_flag = false;
+            if temp_cars.iter().any(|car| {
+                car.behavior_code == "RD" && car.car_rect.intersect(*core_intersection).is_some()
+            }) {
+                self.waiting_flag = true;
+                // println!("Car {} is waiting before the intersection (RD)", self.id);
+            }
+        }
+        if self.behavior_code == "RL"
+            && self.radar.intersect(*core_intersection).is_some()
+            && self.car_rect.intersect(*core_intersection).is_none()
+        {
+            self.waiting_flag = false;
+            if temp_cars.iter().any(|car| {
+                car.behavior_code == "RL" && car.car_rect.intersect(*core_intersection).is_some()
+            }) {
+                self.waiting_flag = true;
+                // println!("Car {} is waiting before the intersection (RL)", self.id);
             }
         }
 
-        // ... replicate similar checks for your other behavior codes ...
-        // (the rest is identical to your Macroquad logic)
-        // e.g. "LU", "RD", "RL", "UR", "UD", "DL", "DU", etc.
+        if self.behavior_code == "UR"
+            && self.radar.intersect(*core_intersection).is_some()
+            && self.car_rect.intersect(*core_intersection).is_none()
+        {
+            self.waiting_flag = false;
+            if temp_cars.iter().any(|car| {
+                (car.behavior_code == "UR" || car.behavior_code == "RL")
+                    && car.car_rect.intersect(*core_intersection).is_some()
+            }) {
+                self.waiting_flag = true;
+                // println!("Car {} is waiting before the intersection (UR)", self.id);
+            }
+        }
+        if self.behavior_code == "UD"
+            && self.radar.intersect(*core_intersection).is_some()
+            && self.car_rect.intersect(*core_intersection).is_none()
+        {
+            self.waiting_flag = false;
+            if temp_cars.iter().any(|car| {
+                (car.behavior_code == "UD" || car.behavior_code == "RL")
+                    && car.car_rect.intersect(*core_intersection).is_some()
+            }) {
+                self.waiting_flag = true;
+                // println!("Car {} is waiting before the intersection (UD)", self.id);
+            }
+        }
 
-        // For brevity, not reproducing all, but you can copy/paste the same if-blocks.
+        if self.behavior_code == "DL"
+            && self.radar.intersect(*core_intersection).is_some()
+            && self.car_rect.intersect(*core_intersection).is_none()
+        {
+            self.waiting_flag = false;
+            if temp_cars.iter().any(|car| {
+                (car.behavior_code == "DL" || car.behavior_code == "UR")
+                    && car.car_rect.intersect(*core_intersection).is_some()
+            }) {
+                self.waiting_flag = true;
+                // println!("Car {} is waiting before the intersection (DL)", self.id);
+            }
+        }
+        if self.behavior_code == "DU"
+            && self.radar.intersect(*core_intersection).is_some()
+            && self.car_rect.intersect(*core_intersection).is_none()
+        {
+            self.waiting_flag = false;
+            if temp_cars.iter().any(|car| {
+                (car.behavior_code == "DU" || car.behavior_code == "LR")
+                    && car.car_rect.intersect(*core_intersection).is_some()
+            }) {
+                self.waiting_flag = true;
+                // println!("Car {} is waiting before the intersection (DU)", self.id);
+            }
+        }
     }
-
-    // Remove unused check_for_collision method
-    // pub fn check_for_collision(&self, temp_cars: &mut Vec<Car>) -> bool {
-    //     temp_cars.retain(|temp_car| temp_car.id != self.id);
-    //     temp_cars
-    //         .iter()
-    //         .any(|temp_car| temp_car.car_rect.intersect(self.car_rect).is_some())
-    // }
 
     /// Move one step in the current direction if it doesn't cause a collision.
     pub fn move_one_step_if_no_collide(&mut self, temp_cars: &mut Vec<Car>) {
         // Copy so we can test a hypothetical move
         let mut temp_self_car = self.clone();
         temp_cars.retain(|car| temp_self_car.id != car.id);
+
+        if self.waiting_flag {
+            // println!("Car {} is waiting and not moving", self.id);
+            return;
+        }
 
         match self.current_direction.as_str() {
             "West" => {
@@ -314,7 +394,6 @@ impl Car {
                     .iter()
                     .all(|car| temp_self_car.car_rect.intersect(car.car_rect).is_none())
                 {
-                    temp_cars.push(temp_self_car);
                     self.car_rect.x -= self.current_speed;
                 }
             }
@@ -324,7 +403,6 @@ impl Car {
                     .iter()
                     .all(|car| temp_self_car.car_rect.intersect(car.car_rect).is_none())
                 {
-                    temp_cars.push(temp_self_car);
                     self.car_rect.y -= self.current_speed;
                 }
             }
@@ -334,7 +412,6 @@ impl Car {
                     .iter()
                     .all(|car| temp_self_car.car_rect.intersect(car.car_rect).is_none())
                 {
-                    temp_cars.push(temp_self_car);
                     self.car_rect.y += self.current_speed;
                 }
             }
@@ -344,13 +421,20 @@ impl Car {
                     .iter()
                     .all(|car| temp_self_car.car_rect.intersect(car.car_rect).is_none())
                 {
-                    temp_cars.push(temp_self_car);
                     self.car_rect.x += self.current_speed;
                 }
             }
             _ => {}
         }
     }
+
+    // Remove unused check_for_collision method
+    // pub fn check_for_collision(&self, temp_cars: &mut Vec<Car>) -> bool {
+    //     temp_cars.retain(|temp_car| temp_car.id != self.id);
+    //     temp_cars
+    //         .iter()
+    //         .any(|temp_car| temp_car.car_rect.intersect(self.car_rect).is_some())
+    // }
 
     /// Update the 'radar' rectangle based on our current direction and nearby cars.
     pub fn update_radar(&mut self, car_index: usize, temp_cars: &Vec<Car>) {
@@ -442,6 +526,9 @@ impl Car {
                 _ => self.current_speed = self.randomized_initial_speed,
             }
         }
+
+        // Clamp final speed to ensure it never exceeds the initial base
+        self.current_speed = self.current_speed.clamp(0.0, self.randomized_initial_speed);
     }
 
     /// Turn the Car if the conditions for turning (based on behavior_code) are met.
