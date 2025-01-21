@@ -462,7 +462,7 @@ impl Car {
                         self.radar.y = other_car.car_rect.y + other_car.car_rect.h;
                     }
                     self.radar.h = (self.car_rect.y - self.radar.y).abs().min(43.);
-                    self.radar.w = 33.;
+                    self.radar.w = 35.;
                 }
             }
             "South" => {
