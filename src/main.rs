@@ -12,7 +12,7 @@ use sdl2::pixels::Color;
 use std::time::Instant;
 use std::time::Duration;
 use text::draw_text;
-use crate::car::{Car, FRect, Vec2};  // Add FRect and Vec2 imports
+use crate::car::{Car, FRect, Vec2, check_perpendicular_and_move_back};  // Add FRect and Vec2 imports
 use rand::Rng;
 use sdl2::image::LoadTexture;
 
@@ -104,7 +104,7 @@ fn render_simulation(
     let mut next_id: u32 = 0;
     let mut cars: Vec<Car> = Vec::new();
     let mut last_spawn_time = Instant::now();
-    let spawn_delay = Duration::from_millis(500);
+    let spawn_delay = Duration::from_millis(100);
 
     // Create texture for cars
     let texture_creator = canvas.texture_creator();
@@ -236,7 +236,12 @@ fn render_simulation(
 
                 // 4) Track speed in metrics
                 update_vehicle_speed(cars[i].current_speed);
+                // 5) Check for perpendicular cars with speed 0 and move one back
+                for j in (i + 1)..cars.len() {
+                check_perpendicular_and_move_back(&mut cars, i, j);
+                }
             }
+            
         }
 
         // ---------------------------------------

@@ -80,6 +80,42 @@ pub struct Car {
     pub dest_point: Vec2,
 }
 
+/// If so, move the car with the lower index back by 5 pixels.
+pub fn check_perpendicular_and_move_back(cars: &mut Vec<Car>, i: usize, j: usize) {
+    let car1 = &cars[i];
+    let car2 = &cars[j];
+
+    // Check if the cars are perpendicular
+    let are_perpendicular = (car1.current_direction == "West" || car1.current_direction == "East")
+        && (car2.current_direction == "North" || car2.current_direction == "South")
+        || (car1.current_direction == "North" || car1.current_direction == "South")
+            && (car2.current_direction == "West" || car2.current_direction == "East");
+
+    // Check if both cars have a speed of 0
+    let both_stopped = car1.current_speed == 0.0 && car2.current_speed == 0.0;
+
+    if are_perpendicular && both_stopped {
+        // Move the car with the lower index back by 5 pixels
+        if i < j {
+            match cars[i].current_direction.as_str() {
+                "West" => cars[i].car_rect.x += 1.0,
+                "East" => cars[i].car_rect.x -= 1.0,
+                "North" => cars[i].car_rect.y += 1.0,
+                "South" => cars[i].car_rect.y -= 1.0,
+                _ => {}
+            }
+        } else {
+            match cars[j].current_direction.as_str() {
+                "West" => cars[j].car_rect.x += 1.0,
+                "East" => cars[j].car_rect.x -= 1.0,
+                "North" => cars[j].car_rect.y += 1.0,
+                "South" => cars[j].car_rect.y -= 1.0,
+                _ => {}
+            }
+        }
+    }
+}
+
 impl Car {
     /// Create a new Car with some randomized behavior, direction, spawn points, etc.
     pub fn new(id: u32, randomized_behavior: &str, initial_direction: &str) -> Self {
