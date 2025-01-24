@@ -66,7 +66,6 @@ fn spawn_random_car(cars: &mut Vec<Car>, next_id: u32) {
     ];
     let (behavior, direction) = behaviors[rng.gen_range(0..behaviors.len())];
     Car::spawn_if_can(cars, next_id, behavior, direction);
-    increment_spawn_count();
 }
 
 fn get_random_behavior_for_direction(direction: &str) -> &'static str {
