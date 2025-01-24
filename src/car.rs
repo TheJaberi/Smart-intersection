@@ -128,43 +128,43 @@ impl Car {
 
         // Update spawn points to match window size using LINE_SPACING
         let spawning = match randomized_behavior {
-            // Right side spawns (x = window edge, y = different lanes)
+            // Right side spawns (x = window edge + 50, y = different lanes)
             "RU" => Vec2::new(
-                (WINDOW_SIZE) as f32,
+                (WINDOW_SIZE + 50) as f32,
                 (LINE_SPACING * 4) as f32 + lane_center_h,
             ),
             "RL" => Vec2::new(
-                (WINDOW_SIZE) as f32,
+                (WINDOW_SIZE + 50) as f32,
                 (LINE_SPACING * 5) as f32 + lane_center_h,
             ),
             "RD" => Vec2::new(
-                (WINDOW_SIZE) as f32,
+                (WINDOW_SIZE + 50) as f32,
                 (LINE_SPACING * 6) as f32 + lane_center_h,
             ),
 
-            // Down side spawns (x = different lanes, y = window edge)
+            // Down side spawns (x = different lanes, y = window edge + 50)
             "DU" => Vec2::new(
                 (LINE_SPACING * 8) as f32 + lane_center_v,
-                (WINDOW_SIZE) as f32,
+                (WINDOW_SIZE + 50) as f32,
             ),
             "DL" => Vec2::new(
                 (LINE_SPACING * 7) as f32 + lane_center_v,
-                (WINDOW_SIZE) as f32,
+                (WINDOW_SIZE + 50) as f32,
             ),
             "DR" => Vec2::new(
                 (LINE_SPACING * 9) as f32 + lane_center_v,
-                (WINDOW_SIZE) as f32,
+                (WINDOW_SIZE + 50) as f32,
             ),
 
-            // Left side spawns (x = 50, y = different lanes)
-            "LU" => Vec2::new(0., (LINE_SPACING * 7) as f32 + lane_center_h),
-            "LR" => Vec2::new(0., (LINE_SPACING * 8) as f32 + lane_center_h),
-            "LD" => Vec2::new(0., (LINE_SPACING * 9) as f32 + lane_center_h),
+            // Left side spawns (x = -50, y = different lanes)
+            "LU" => Vec2::new(-50., (LINE_SPACING * 7) as f32 + lane_center_h),
+            "LR" => Vec2::new(-50., (LINE_SPACING * 8) as f32 + lane_center_h),
+            "LD" => Vec2::new(-50., (LINE_SPACING * 9) as f32 + lane_center_h),
 
-            // Up side spawns (x = different lanes, y = 50)
-            "UD" => Vec2::new((LINE_SPACING * 5) as f32 + lane_center_v, 0.),
-            "UR" => Vec2::new((LINE_SPACING * 6) as f32 + lane_center_v, 0.),
-            "UL" => Vec2::new((LINE_SPACING * 4) as f32 + lane_center_v, 0.),
+            // Up side spawns (x = different lanes, y = -50)
+            "UD" => Vec2::new((LINE_SPACING * 5) as f32 + lane_center_v, -50.),
+            "UR" => Vec2::new((LINE_SPACING * 6) as f32 + lane_center_v, -50.),
+            "UL" => Vec2::new((LINE_SPACING * 4) as f32 + lane_center_v, -50.),
             _ => panic!("Unexpected lane"),
         };
 
