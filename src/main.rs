@@ -279,13 +279,25 @@ fn render_simulation(
         cars.retain(|car| {
             let distance_to_dest =
                 Vec2::new(car.car_rect.x, car.car_rect.y).distance(car.dest_point);
-            if distance_to_dest < 20.0 {
+            // println!(
+            //     "Car ID: {}, Car Rect: {:?}, Dest Point: {:?}, Distance to Dest: {}",
+            //     car.id, car.car_rect, car.dest_point, distance_to_dest
+            // );
+            if distance_to_dest < 20.0
+                || car.car_rect.x < -50.0
+                || car.car_rect.x > WINDOW_SIZE as f32 + 60.0
+                || car.car_rect.y < -50.0
+                || car.car_rect.y > WINDOW_SIZE as f32 + 60.0
+            {
                 update_intersection_time(car.lifetime.elapsed().as_secs_f32());
                 false
             } else {
                 true
             }
         });
+
+        // Print the count of cars
+        // println!("Number of cars: {}", cars.len());
 
         // Present the frame and wait
         canvas.present();
