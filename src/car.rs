@@ -286,11 +286,23 @@ impl Car {
             && self.car_rect.intersect(*core_intersection).is_none()
         {
             self.waiting_flag = false;
-            if temp_cars.iter().any(|car| {
-                car.behavior_code == "LR" && car.car_rect.intersect(*core_intersection).is_some()
-            }) {
+            let left_turning_cars = temp_cars
+                .iter()
+                .filter(|car| {
+                    car.car_rect.intersect(*core_intersection).is_some()
+                        && (car.behavior_code == "LR"
+                            || car.behavior_code == "UR"
+                            || car.behavior_code == "DR")
+                })
+                .count();
+
+            if left_turning_cars >= 3
+                || temp_cars.iter().any(|car| {
+                    car.behavior_code == "LR"
+                        && car.car_rect.intersect(*core_intersection).is_some()
+                })
+            {
                 self.waiting_flag = true;
-                // println!("Car {} is waiting before the intersection (LR)", self.id);
             }
         }
         if self.behavior_code == "LU"
@@ -335,12 +347,23 @@ impl Car {
             && self.car_rect.intersect(*core_intersection).is_none()
         {
             self.waiting_flag = false;
-            if temp_cars.iter().any(|car| {
-                (car.behavior_code == "UR" || car.behavior_code == "RL")
-                    && car.car_rect.intersect(*core_intersection).is_some()
-            }) {
+            let left_turning_cars = temp_cars
+                .iter()
+                .filter(|car| {
+                    car.car_rect.intersect(*core_intersection).is_some()
+                        && (car.behavior_code == "LR"
+                            || car.behavior_code == "UR"
+                            || car.behavior_code == "DR")
+                })
+                .count();
+
+            if left_turning_cars >= 3
+                || temp_cars.iter().any(|car| {
+                    (car.behavior_code == "UR" || car.behavior_code == "RL")
+                        && car.car_rect.intersect(*core_intersection).is_some()
+                })
+            {
                 self.waiting_flag = true;
-                // println!("Car {} is waiting before the intersection (UR)", self.id);
             }
         }
         if self.behavior_code == "UD"
@@ -362,12 +385,23 @@ impl Car {
             && self.car_rect.intersect(*core_intersection).is_none()
         {
             self.waiting_flag = false;
-            if temp_cars.iter().any(|car| {
-                (car.behavior_code == "DL" || car.behavior_code == "UR")
-                    && car.car_rect.intersect(*core_intersection).is_some()
-            }) {
+            let left_turning_cars = temp_cars
+                .iter()
+                .filter(|car| {
+                    car.car_rect.intersect(*core_intersection).is_some()
+                        && (car.behavior_code == "LR"
+                            || car.behavior_code == "UR"
+                            || car.behavior_code == "DR")
+                })
+                .count();
+
+            if left_turning_cars >= 3
+                || temp_cars.iter().any(|car| {
+                    (car.behavior_code == "DL" || car.behavior_code == "UR")
+                        && car.car_rect.intersect(*core_intersection).is_some()
+                })
+            {
                 self.waiting_flag = true;
-                // println!("Car {} is waiting before the intersection (DL)", self.id);
             }
         }
         if self.behavior_code == "DU"
