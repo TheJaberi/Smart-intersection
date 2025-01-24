@@ -185,30 +185,30 @@ impl Car {
 
         // Destination point based on behavior - using LINE_SPACING for consistency
         let dest_point = match randomized_behavior {
-            "RU" => Vec2::new((LINE_SPACING * 7) as f32, 50.),
-            "RL" => Vec2::new(50., (LINE_SPACING * 5) as f32 + lane_center_h),
-            "RD" => Vec2::new((LINE_SPACING * 7) as f32, (WINDOW_SIZE - 50) as f32),
-            "DU" => Vec2::new((LINE_SPACING * 8) as f32 + lane_center_v, 50.),
-            "DL" => Vec2::new(50., (LINE_SPACING * 7) as f32 + lane_center_h),
+            "RU" => Vec2::new((LINE_SPACING * 7) as f32, -50.),
+            "RL" => Vec2::new(-50., (LINE_SPACING * 5) as f32 + lane_center_h),
+            "RD" => Vec2::new((LINE_SPACING * 7) as f32, WINDOW_SIZE as f32),
+            "DU" => Vec2::new((LINE_SPACING * 8) as f32 + lane_center_v, -50.),
+            "DL" => Vec2::new(-50., (LINE_SPACING * 7) as f32 + lane_center_h),
             "DR" => Vec2::new(
-                (WINDOW_SIZE - 50) as f32,
+                WINDOW_SIZE as f32,
                 (LINE_SPACING * 7) as f32 + lane_center_h,
             ),
-            "LU" => Vec2::new((LINE_SPACING * 7) as f32, 50.),
+            "LU" => Vec2::new((LINE_SPACING * 7) as f32, -50.),
             "LR" => Vec2::new(
-                (WINDOW_SIZE - 50) as f32,
+                WINDOW_SIZE as f32,
                 (LINE_SPACING * 7) as f32 + lane_center_h,
             ),
-            "LD" => Vec2::new((LINE_SPACING * 7) as f32, (WINDOW_SIZE - 50) as f32),
+            "LD" => Vec2::new((LINE_SPACING * 7) as f32, WINDOW_SIZE as f32),
             "UD" => Vec2::new(
                 (LINE_SPACING * 5) as f32 + lane_center_v,
-                (WINDOW_SIZE - 50) as f32,
+                WINDOW_SIZE as f32,
             ),
             "UR" => Vec2::new(
-                (WINDOW_SIZE - 50) as f32,
+                WINDOW_SIZE as f32,
                 (LINE_SPACING * 5) as f32 + lane_center_h,
             ),
-            "UL" => Vec2::new(50., (LINE_SPACING * 5) as f32 + lane_center_h),
+            "UL" => Vec2::new(-50., (LINE_SPACING * 5) as f32 + lane_center_h),
             _ => panic!("Unexpected lane"),
         };
 
