@@ -1,9 +1,9 @@
+use crate::{constants::*, increment_spawn_count};
 use rand::Rng;
-use sdl2::render::{Texture, WindowCanvas};
 use sdl2::rect::Rect as SdlRect;
 use sdl2::render::BlendMode;
+use sdl2::render::{Texture, WindowCanvas};
 use std::time::Instant;
-use crate::constants::*;
 
 /// A simple 2D vector for float values
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -63,7 +63,7 @@ pub struct Dimensions {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Car {
-    pub id: u32,  // Changed from uuid to simple integer id
+    pub id: u32, // Changed from uuid to simple integer id
     pub spawn_point: Vec2,
     pub lifetime: Instant,
     pub car_rect: FRect,
@@ -131,58 +131,40 @@ impl Car {
             // Right side spawns (x = window edge, y = different lanes)
             "RU" => Vec2::new(
                 (WINDOW_SIZE - 50) as f32,
-                (LINE_SPACING * 4) as f32 + lane_center_h
+                (LINE_SPACING * 4) as f32 + lane_center_h,
             ),
             "RL" => Vec2::new(
                 (WINDOW_SIZE - 50) as f32,
-                (LINE_SPACING * 5) as f32 + lane_center_h
+                (LINE_SPACING * 5) as f32 + lane_center_h,
             ),
             "RD" => Vec2::new(
                 (WINDOW_SIZE - 50) as f32,
-                (LINE_SPACING * 6) as f32 + lane_center_h
+                (LINE_SPACING * 6) as f32 + lane_center_h,
             ),
-            
+
             // Down side spawns (x = different lanes, y = window edge)
             "DU" => Vec2::new(
                 (LINE_SPACING * 8) as f32 + lane_center_v,
-                (WINDOW_SIZE - 50) as f32
+                (WINDOW_SIZE - 50) as f32,
             ),
             "DL" => Vec2::new(
                 (LINE_SPACING * 7) as f32 + lane_center_v,
-                (WINDOW_SIZE - 50) as f32
+                (WINDOW_SIZE - 50) as f32,
             ),
             "DR" => Vec2::new(
                 (LINE_SPACING * 9) as f32 + lane_center_v,
-                (WINDOW_SIZE - 50) as f32
+                (WINDOW_SIZE - 50) as f32,
             ),
-            
+
             // Left side spawns (x = 50, y = different lanes)
-            "LU" => Vec2::new(
-                50.,
-                (LINE_SPACING * 7) as f32 + lane_center_h
-            ),
-            "LR" => Vec2::new(
-                50.,
-                (LINE_SPACING * 8) as f32 + lane_center_h
-            ),
-            "LD" => Vec2::new(
-                50.,
-                (LINE_SPACING * 9) as f32 + lane_center_h
-            ),
-            
+            "LU" => Vec2::new(50., (LINE_SPACING * 7) as f32 + lane_center_h),
+            "LR" => Vec2::new(50., (LINE_SPACING * 8) as f32 + lane_center_h),
+            "LD" => Vec2::new(50., (LINE_SPACING * 9) as f32 + lane_center_h),
+
             // Up side spawns (x = different lanes, y = 50)
-            "UD" => Vec2::new(
-                (LINE_SPACING * 5) as f32 + lane_center_v,
-                50.
-            ),
-            "UR" => Vec2::new(
-                (LINE_SPACING * 6) as f32 + lane_center_v,
-                50.
-            ),
-            "UL" => Vec2::new(
-                (LINE_SPACING * 4) as f32 + lane_center_v,
-                50.
-            ),
+            "UD" => Vec2::new((LINE_SPACING * 5) as f32 + lane_center_v, 50.),
+            "UR" => Vec2::new((LINE_SPACING * 6) as f32 + lane_center_v, 50.),
+            "UL" => Vec2::new((LINE_SPACING * 4) as f32 + lane_center_v, 50.),
             _ => panic!("Unexpected lane"),
         };
 
@@ -203,59 +185,35 @@ impl Car {
 
         // Destination point based on behavior - using LINE_SPACING for consistency
         let dest_point = match randomized_behavior {
-            "RU" => Vec2::new(
-                (LINE_SPACING * 7) as f32,
-                50.
-            ),
-            "RL" => Vec2::new(
-                50.,
-                (LINE_SPACING * 5) as f32 + lane_center_h
-            ),
-            "RD" => Vec2::new(
-                (LINE_SPACING * 7) as f32,
-                (WINDOW_SIZE - 50) as f32
-            ),
-            "DU" => Vec2::new(
-                (LINE_SPACING * 8) as f32 + lane_center_v,
-                50.
-            ),
-            "DL" => Vec2::new(
-                50.,
-                (LINE_SPACING * 7) as f32 + lane_center_h
-            ),
+            "RU" => Vec2::new((LINE_SPACING * 7) as f32, 50.),
+            "RL" => Vec2::new(50., (LINE_SPACING * 5) as f32 + lane_center_h),
+            "RD" => Vec2::new((LINE_SPACING * 7) as f32, (WINDOW_SIZE - 50) as f32),
+            "DU" => Vec2::new((LINE_SPACING * 8) as f32 + lane_center_v, 50.),
+            "DL" => Vec2::new(50., (LINE_SPACING * 7) as f32 + lane_center_h),
             "DR" => Vec2::new(
                 (WINDOW_SIZE - 50) as f32,
-                (LINE_SPACING * 7) as f32 + lane_center_h
+                (LINE_SPACING * 7) as f32 + lane_center_h,
             ),
-            "LU" => Vec2::new(
-                (LINE_SPACING * 7) as f32,
-                50.
-            ),
+            "LU" => Vec2::new((LINE_SPACING * 7) as f32, 50.),
             "LR" => Vec2::new(
                 (WINDOW_SIZE - 50) as f32,
-                (LINE_SPACING * 7) as f32 + lane_center_h
+                (LINE_SPACING * 7) as f32 + lane_center_h,
             ),
-            "LD" => Vec2::new(
-                (LINE_SPACING * 7) as f32,
-                (WINDOW_SIZE - 50) as f32
-            ),
+            "LD" => Vec2::new((LINE_SPACING * 7) as f32, (WINDOW_SIZE - 50) as f32),
             "UD" => Vec2::new(
                 (LINE_SPACING * 5) as f32 + lane_center_v,
-                (WINDOW_SIZE - 50) as f32
+                (WINDOW_SIZE - 50) as f32,
             ),
             "UR" => Vec2::new(
                 (WINDOW_SIZE - 50) as f32,
-                (LINE_SPACING * 5) as f32 + lane_center_h
+                (LINE_SPACING * 5) as f32 + lane_center_h,
             ),
-            "UL" => Vec2::new(
-                50.,
-                (LINE_SPACING * 5) as f32 + lane_center_h
-            ),
+            "UL" => Vec2::new(50., (LINE_SPACING * 5) as f32 + lane_center_h),
             _ => panic!("Unexpected lane"),
         };
 
         Car {
-            id, 
+            id,
             lifetime: Instant::now(),
             spawn_point: spawning,
             car_rect,
@@ -299,12 +257,17 @@ impl Car {
         }) && cars_ref.len() < 9999
         {
             cars_ref.push(possible_new_car);
+            increment_spawn_count();
         }
     }
 
     /// If approaching an intersection, check if this Car needs to wait
     /// based on other cars' positions/behaviors.
-    pub fn communicate_with_intersection(&mut self, cars_ref: &Vec<Car>, core_intersection: &FRect) {
+    pub fn communicate_with_intersection(
+        &mut self,
+        cars_ref: &Vec<Car>,
+        core_intersection: &FRect,
+    ) {
         let mut temp_cars = cars_ref.clone();
         temp_cars.retain(|car| car.id != self.id);
 
@@ -482,7 +445,8 @@ impl Car {
                 self.radar.h = self.radar_size.short_edge;
 
                 for (other_index, other_car) in temp_cars.iter().enumerate() {
-                    if car_index != other_index && self.radar.intersect(other_car.car_rect).is_some()
+                    if car_index != other_index
+                        && self.radar.intersect(other_car.car_rect).is_some()
                     {
                         self.radar.x = other_car.car_rect.x + other_car.car_rect.w;
                     }
@@ -493,7 +457,8 @@ impl Car {
                 self.radar.x = self.car_rect.x;
                 self.radar.y = self.car_rect.y - self.radar_size.long_edge;
                 for (other_index, other_car) in temp_cars.iter().enumerate() {
-                    if car_index != other_index && self.radar.intersect(other_car.car_rect).is_some()
+                    if car_index != other_index
+                        && self.radar.intersect(other_car.car_rect).is_some()
                     {
                         self.radar.y = other_car.car_rect.y + other_car.car_rect.h;
                     }
@@ -507,7 +472,8 @@ impl Car {
                 self.radar.w = self.radar_size.short_edge;
                 self.radar.h = self.radar_size.long_edge;
                 for (other_index, other_car) in temp_cars.iter().enumerate() {
-                    if car_index != other_index && self.radar.intersect(other_car.car_rect).is_some()
+                    if car_index != other_index
+                        && self.radar.intersect(other_car.car_rect).is_some()
                     {
                         self.radar.h =
                             other_car.car_rect.y - (self.car_rect.y + self.car_size.long_edge);
@@ -521,10 +487,10 @@ impl Car {
                 self.radar.h = self.radar_size.short_edge;
 
                 for (other_index, other_car) in temp_cars.iter().enumerate() {
-                    if car_index != other_index && self.radar.intersect(other_car.car_rect).is_some()
+                    if car_index != other_index
+                        && self.radar.intersect(other_car.car_rect).is_some()
                     {
-                        self.radar.w =
-                            other_car.car_rect.x - (self.car_rect.x + self.car_rect.w);
+                        self.radar.w = other_car.car_rect.x - (self.car_rect.x + self.car_rect.w);
                     }
                     // Additional logic if you have radar-radar checks, etc.
                 }
@@ -728,7 +694,7 @@ impl Car {
     /// From: Upper lane moving South
     /// To: Left lane moving West
     fn turn_up_left(&mut self, temp_cars: &Vec<Car>) {
-        if !self.has_turned && self.car_rect.y >= (LINE_SPACING * 4) as f32 + OFFSET{
+        if !self.has_turned && self.car_rect.y >= (LINE_SPACING * 4) as f32 + OFFSET {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
@@ -784,7 +750,7 @@ impl Car {
     /// From: Lower lane moving North
     /// To: Left lane moving West
     fn turn_down_left(&mut self, temp_cars: &Vec<Car>) {
-        if !self.has_turned && self.car_rect.y <= (LINE_SPACING * 6) as f32+ OFFSET{
+        if !self.has_turned && self.car_rect.y <= (LINE_SPACING * 6) as f32 + OFFSET {
             self.waiting_flag = true;
             let mut clear_to_turn = true;
 
@@ -881,15 +847,7 @@ impl Car {
         // - `angle` in degrees
         // - `center` is None => rotation around top-left
         // - `flip_horizontal/flip_vertical` are false
-        canvas.copy_ex(
-            car_texture,
-            None,
-            dest_rect,
-            angle,
-            None,
-            false,
-            false,
-        )?;
+        canvas.copy_ex(car_texture, None, dest_rect, angle, None, false, false)?;
 
         Ok(())
     }
