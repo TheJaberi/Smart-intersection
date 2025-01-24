@@ -258,7 +258,7 @@ fn render_simulation(
             for i in 0..cars.len() {
                 // Only move if not waiting
                 if !cars[i].waiting_flag {
-                    cars[i].move_one_step_if_no_collide(&mut temp_cars);
+                    cars[i].move_one_step_if_no_collide(&mut temp_cars, &core_intersection);
                 }
             }
         }

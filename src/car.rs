@@ -60,6 +60,12 @@ pub struct Dimensions {
     pub short_edge: f32,
     pub delta_edge: f32,
 }
+#[derive(Debug, PartialEq, Clone)]
+pub enum IntersectionState {
+    Before,
+    Inside,
+    After,
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Car {
@@ -78,6 +84,7 @@ pub struct Car {
     pub car_size: Dimensions,
     pub radar_size: Dimensions,
     pub dest_point: Vec2,
+    pub intersection_state: IntersectionState,
 }
 
 /// If so, move the car with the lower index back by 5 pixels.
@@ -93,8 +100,10 @@ pub fn check_perpendicular_and_move_back(cars: &mut Vec<Car>, i: usize, j: usize
 
     // Check if both cars have a speed of 0
     let both_stopped = car1.current_speed == 0.0 && car2.current_speed == 0.0;
+    let before_intersection = car1.intersection_state == IntersectionState::Before
+        || car2.intersection_state == IntersectionState::Before;
 
-    if are_perpendicular && both_stopped {
+    if are_perpendicular && both_stopped && !before_intersection {
         // Move the car with the lower index back by 5 pixels
         if i < j {
             match cars[i].current_direction.as_str() {
@@ -237,6 +246,7 @@ impl Car {
                 delta_edge: CAR_SIZE.x - CAR_SIZE.y,
             },
             dest_point,
+            intersection_state: IntersectionState::Before,
         }
     }
 
@@ -376,7 +386,7 @@ impl Car {
     }
 
     /// Move one step in the current direction if it doesn't cause a collision.
-    pub fn move_one_step_if_no_collide(&mut self, temp_cars: &mut Vec<Car>) {
+    pub fn move_one_step_if_no_collide(&mut self, temp_cars: &mut Vec<Car>, intersection: &FRect) {
         // Copy so we can test a hypothetical move
         let mut temp_self_car = self.clone();
         temp_cars.retain(|car| temp_self_car.id != car.id);
@@ -424,6 +434,11 @@ impl Car {
                 }
             }
             _ => {}
+        }
+
+        // Update intersection state if the car is inside the intersection
+        if self.car_rect.intersect(*intersection).is_some() {
+            self.intersection_state = IntersectionState::Inside;
         }
     }
 
