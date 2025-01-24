@@ -281,7 +281,6 @@ fn render_simulation(
                 Vec2::new(car.car_rect.x, car.car_rect.y).distance(car.dest_point);
             if distance_to_dest < 20.0 {
                 update_intersection_time(car.lifetime.elapsed().as_secs_f32());
-                increment_vehicle_count();
                 false
             } else {
                 true
