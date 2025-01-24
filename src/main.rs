@@ -1,20 +1,20 @@
+mod car;
 mod constants;
 mod image;
 mod metrics;
 mod text;
-mod car;
+use crate::car::{check_perpendicular_and_move_back, Car, FRect, Vec2}; // Add FRect and Vec2 imports
 use constants::*;
 use image::draw_image;
-use metrics::*;  // Changed to import all metrics functions
+use metrics::*; // Changed to import all metrics functions
+use rand::Rng;
 use sdl2::event::Event;
+use sdl2::image::LoadTexture;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use std::time::Instant;
 use std::time::Duration;
+use std::time::Instant;
 use text::draw_text;
-use crate::car::{Car, FRect, Vec2, check_perpendicular_and_move_back};  // Add FRect and Vec2 imports
-use rand::Rng;
-use sdl2::image::LoadTexture;
 
 pub fn main() {
     let sdl_context = sdl2::init().expect("Failed to initialize SDL2");
@@ -51,10 +51,18 @@ fn spawn_car_with_direction(cars: &mut Vec<Car>, next_id: u32, behavior: &str, d
 fn spawn_random_car(cars: &mut Vec<Car>, next_id: u32) {
     let mut rng = rand::thread_rng();
     let behaviors = [
-        ("RU", "West"), ("RL", "West"), ("RD", "West"),
-        ("DU", "North"), ("DL", "North"), ("DR", "North"),
-        ("LU", "East"), ("LR", "East"), ("LD", "East"),
-        ("UD", "South"), ("UR", "South"), ("UL", "South"),
+        ("RU", "West"),
+        ("RL", "West"),
+        ("RD", "West"),
+        ("DU", "North"),
+        ("DL", "North"),
+        ("DR", "North"),
+        ("LU", "East"),
+        ("LR", "East"),
+        ("LD", "East"),
+        ("UD", "South"),
+        ("UR", "South"),
+        ("UL", "South"),
     ];
     let (behavior, direction) = behaviors[rng.gen_range(0..behaviors.len())];
     Car::spawn_if_can(cars, next_id, behavior, direction);
@@ -221,8 +229,8 @@ fn render_simulation(
                 let previous_speed = cars[i].current_speed;
 
                 // 1) Radar + speed
-                cars[i].update_radar(i, &temp_cars);
                 cars[i].adjust_current_speed();
+                cars[i].update_radar(i, &temp_cars);
 
                 // 2) "Close call" detection
                 if (previous_speed > 0.0 && cars[i].current_speed == 0.0)
@@ -238,10 +246,9 @@ fn render_simulation(
                 update_vehicle_speed(cars[i].current_speed);
                 // 5) Check for perpendicular cars with speed 0 and move one back
                 for j in (i + 1)..cars.len() {
-                check_perpendicular_and_move_back(&mut cars, i, j);
+                    check_perpendicular_and_move_back(&mut cars, i, j);
                 }
             }
-            
         }
 
         // ---------------------------------------
@@ -262,7 +269,7 @@ fn render_simulation(
         // ---------------------------------------
         for car in &cars {
             car.draw_all_components(canvas, &car_texture, true)
-               .expect("Failed to draw car");
+                .expect("Failed to draw car");
         }
         // Optionally draw intersection bounds again
         draw_intersection_bounds(canvas);
@@ -271,8 +278,8 @@ fn render_simulation(
         // G) Remove cars that have reached destination
         // ---------------------------------------
         cars.retain(|car| {
-            let distance_to_dest = Vec2::new(car.car_rect.x, car.car_rect.y)
-                .distance(car.dest_point);
+            let distance_to_dest =
+                Vec2::new(car.car_rect.x, car.car_rect.y).distance(car.dest_point);
             if distance_to_dest < 20.0 {
                 update_intersection_time(car.lifetime.elapsed().as_secs_f32());
                 increment_vehicle_count();
@@ -287,7 +294,6 @@ fn render_simulation(
         std::thread::sleep(FRAME_DURATION);
     }
 }
-
 
 fn render_metrics(
     mut canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
@@ -310,7 +316,8 @@ fn render_metrics(
         100,
         &mut canvas,
         &ttf_context,
-    ).unwrap();
+    )
+    .unwrap();
 
     // Draw stats
     for (i, stat) in stats.iter().enumerate() {
@@ -324,7 +331,8 @@ fn render_metrics(
             150 + (i as i32 * 50),
             &mut canvas,
             &ttf_context,
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     canvas.present();
