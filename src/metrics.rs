@@ -4,7 +4,7 @@ use std::sync::Mutex;
 #[derive(Clone, Copy)]
 pub struct Metrics {
     pub vehicle_count: u32,
-    pub cars_spawned: u32,  // New field to track total spawns
+    pub cars_spawned: u32, // New field to track total spawns
     pub min_vehicle_speed: f32,
     pub max_vehicle_speed: f32,
     pub min_intersection_pass_time: f32,
@@ -67,7 +67,7 @@ pub fn increment_spawn_count() {
 
 pub fn get_metrics_display() -> (String, Vec<String>) {
     let metrics = METRICS.lock().unwrap();
-    
+
     let title = if metrics.cars_spawned == 0 {
         "No Cars Were Spawned".to_string()
     } else {
@@ -77,12 +77,18 @@ pub fn get_metrics_display() -> (String, Vec<String>) {
     let mut stats = Vec::new();
     stats.push(format!("Total Cars Spawned: {}", metrics.cars_spawned));
     stats.push(format!("Cars Completed Journey: {}", metrics.vehicle_count));
-    
+
     // Speed metrics
     if metrics.cars_spawned > 0 {
         if metrics.max_vehicle_speed > 0.0 {
-            stats.push(format!("Max Vehicle Velocity: {:.2}", metrics.max_vehicle_speed));
-            stats.push(format!("Min Vehicle Velocity: {:.2}", metrics.min_vehicle_speed));
+            stats.push(format!(
+                "Max Vehicle Velocity: {:.2}",
+                metrics.max_vehicle_speed
+            ));
+            stats.push(format!(
+                "Min Vehicle Velocity: {:.2}",
+                metrics.min_vehicle_speed
+            ));
         } else {
             stats.push("Max Vehicle Velocity: None".to_string());
             stats.push("Min Vehicle Velocity: None".to_string());
@@ -91,8 +97,14 @@ pub fn get_metrics_display() -> (String, Vec<String>) {
 
     // Time metrics
     if metrics.vehicle_count > 0 {
-        stats.push(format!("Max Time to Pass: {:.2}s", metrics.max_intersection_pass_time));
-        stats.push(format!("Min Time to Pass: {:.2}s", metrics.min_intersection_pass_time));
+        stats.push(format!(
+            "Max Time to Pass: {:.2}s",
+            metrics.max_intersection_pass_time
+        ));
+        stats.push(format!(
+            "Min Time to Pass: {:.2}s",
+            metrics.min_intersection_pass_time
+        ));
     } else {
         stats.push("Max Time to Pass: No completions".to_string());
         stats.push("Min Time to Pass: No completions".to_string());

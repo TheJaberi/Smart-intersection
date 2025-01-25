@@ -45,7 +45,6 @@ pub fn main() {
 
 fn spawn_car_with_direction(cars: &mut Vec<Car>, next_id: u32, behavior: &str, direction: &str) {
     Car::spawn_if_can(cars, next_id, behavior, direction);
-    increment_spawn_count();
 }
 
 fn spawn_random_car(cars: &mut Vec<Car>, next_id: u32) {
@@ -151,7 +150,6 @@ fn render_simulation(
                     let behavior = get_random_behavior_for_direction("West");
                     spawn_car_with_direction(&mut cars, next_id, behavior, "West");
                     next_id += 1;
-                    increment_vehicle_count();
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Left),
@@ -160,7 +158,6 @@ fn render_simulation(
                     let behavior = get_random_behavior_for_direction("East");
                     spawn_car_with_direction(&mut cars, next_id, behavior, "East");
                     next_id += 1;
-                    increment_vehicle_count();
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Up),
@@ -169,7 +166,6 @@ fn render_simulation(
                     let behavior = get_random_behavior_for_direction("South");
                     spawn_car_with_direction(&mut cars, next_id, behavior, "South");
                     next_id += 1;
-                    increment_vehicle_count();
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Down),
@@ -178,7 +174,6 @@ fn render_simulation(
                     let behavior = get_random_behavior_for_direction("North");
                     spawn_car_with_direction(&mut cars, next_id, behavior, "North");
                     next_id += 1;
-                    increment_vehicle_count();
                 }
 
                 // Toggle random generation with 'R'
@@ -199,7 +194,6 @@ fn render_simulation(
         if is_random_generation && last_spawn_time.elapsed() >= spawn_delay {
             spawn_random_car(&mut cars, next_id);
             next_id += 1;
-            increment_vehicle_count();
             last_spawn_time = Instant::now();
         }
 
@@ -291,6 +285,7 @@ fn render_simulation(
                 || car.car_rect.y > WINDOW_SIZE as f32 + 60.0
             {
                 update_intersection_time(car.lifetime.elapsed().as_secs_f32());
+                increment_vehicle_count();
                 false
             } else {
                 true

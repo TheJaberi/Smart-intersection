@@ -64,7 +64,6 @@ pub struct Dimensions {
 pub enum IntersectionState {
     Before,
     Inside,
-    After,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -100,8 +99,6 @@ pub fn check_perpendicular_and_move_back(cars: &mut Vec<Car>, i: usize, j: usize
 
     // Check if both cars have a speed of 0
     let both_stopped = car1.current_speed == 0.0 && car2.current_speed == 0.0;
-    let before_intersection = car1.intersection_state == IntersectionState::Before
-        || car2.intersection_state == IntersectionState::Before;
 
     if are_perpendicular && both_stopped {
         // Move the car with the lower index back by 5 pixels
