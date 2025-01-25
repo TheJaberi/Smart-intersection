@@ -290,16 +290,15 @@ impl Car {
                 .iter()
                 .filter(|car| {
                     car.car_rect.intersect(*core_intersection).is_some()
-                        && (car.behavior_code == "LR"
+                        && (car.behavior_code == "RD"
                             || car.behavior_code == "UR"
-                            || car.behavior_code == "DR")
+                            || car.behavior_code == "DL"
+                            || car.behavior_code == "LU")
                 })
                 .count();
 
-            if left_turning_cars >= 3
-                || temp_cars.iter().any(|car| {
-                    car.behavior_code == "LR"
-                        && car.car_rect.intersect(*core_intersection).is_some()
+            if left_turning_cars >= 3 || temp_cars.iter().any(|car| {
+                    car.behavior_code == "LR"&& car.car_rect.intersect(*core_intersection).is_some()
                 })
             {
                 self.waiting_flag = true;
