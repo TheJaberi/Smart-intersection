@@ -277,146 +277,57 @@ impl Car {
     ) {
         let mut temp_cars = cars_ref.clone();
         temp_cars.retain(|car| car.id != self.id);
-
-        if self.behavior_code == "LR"
-            && self.radar.intersect(*core_intersection).is_some()
-            && self.car_rect.intersect(*core_intersection).is_none()
-        {
+    
+        let is_in_radar = self.radar.intersect(*core_intersection).is_some();
+        let is_outside_intersection = self.car_rect.intersect(*core_intersection).is_none();
+    
+        if is_in_radar && is_outside_intersection {
             self.waiting_flag = false;
+    
+            // Count cars currently turning left in the intersection
             let left_turning_cars = temp_cars
                 .iter()
                 .filter(|car| {
                     car.car_rect.intersect(*core_intersection).is_some()
-                        && (car.behavior_code == "RD"
-                            || car.behavior_code == "UR"
-                            || car.behavior_code == "DL"
-                            || car.behavior_code == "LU")
+                        && matches!(car.behavior_code.as_str(), "RD" | "LU" | "UR" | "DL")
+                        && !car.waiting_flag  // Only count cars that are actually moving
                 })
                 .count();
-
-            if left_turning_cars >= 3
-                || temp_cars.iter().any(|car| {
-                    car.behavior_code == "LR"
-                        && car.car_rect.intersect(*core_intersection).is_some()
-                })
-            {
-                self.waiting_flag = true;
+    
+            // For all left-turning behaviors
+            if matches!(self.behavior_code.as_str(), "RD" | "LU" | "UR" | "DL") {
+                // If there are already 3 or more cars turning left, make this car wait
+                if left_turning_cars >= 3 {
+                    self.waiting_flag = true;
+                    return;
+                }
             }
-        }
-        if self.behavior_code == "LU"
-            && self.radar.intersect(*core_intersection).is_some()
-            && self.car_rect.intersect(*core_intersection).is_none()
-        {
-            self.waiting_flag = false;
-            if temp_cars.iter().any(|car| {
-                car.behavior_code == "LU" && car.car_rect.intersect(*core_intersection).is_some()
-            }) {
-                self.waiting_flag = true;
-                // println!("Car {} is waiting before the intersection (LU)", self.id);
-            }
-        }
-        if self.behavior_code == "RD"
-            && self.radar.intersect(*core_intersection).is_some()
-            && self.car_rect.intersect(*core_intersection).is_none()
-        {
-            self.waiting_flag = false;
-            if temp_cars.iter().any(|car| {
-                car.behavior_code == "RD" && car.car_rect.intersect(*core_intersection).is_some()
-            }) {
-                self.waiting_flag = true;
-                // println!("Car {} is waiting before the intersection (RD)", self.id);
-            }
-        }
-        if self.behavior_code == "RL"
-            && self.radar.intersect(*core_intersection).is_some()
-            && self.car_rect.intersect(*core_intersection).is_none()
-        {
-            self.waiting_flag = false;
-            if temp_cars.iter().any(|car| {
-                car.behavior_code == "RL" && car.car_rect.intersect(*core_intersection).is_some()
-            }) {
-                self.waiting_flag = true;
-                // println!("Car {} is waiting before the intersection (RL)", self.id);
-            }
-        }
-
-        if self.behavior_code == "UR"
-            && self.radar.intersect(*core_intersection).is_some()
-            && self.car_rect.intersect(*core_intersection).is_none()
-        {
-            self.waiting_flag = false;
-            let left_turning_cars = temp_cars
-                .iter()
-                .filter(|car| {
-                    car.car_rect.intersect(*core_intersection).is_some()
-                        && (car.behavior_code == "LR"
-                            || car.behavior_code == "UR"
-                            || car.behavior_code == "DR")
-                })
-                .count();
-
-            if left_turning_cars >= 3
-                || temp_cars.iter().any(|car| {
-                    (car.behavior_code == "UR" || car.behavior_code == "RL")
-                        && car.car_rect.intersect(*core_intersection).is_some()
-                })
-            {
-                self.waiting_flag = true;
-            }
-        }
-        if self.behavior_code == "UD"
-            && self.radar.intersect(*core_intersection).is_some()
-            && self.car_rect.intersect(*core_intersection).is_none()
-        {
-            self.waiting_flag = false;
-            if temp_cars.iter().any(|car| {
-                (car.behavior_code == "UD" || car.behavior_code == "RL")
-                    && car.car_rect.intersect(*core_intersection).is_some()
-            }) {
-                self.waiting_flag = true;
-                // println!("Car {} is waiting before the intersection (UD)", self.id);
-            }
-        }
-
-        if self.behavior_code == "DL"
-            && self.radar.intersect(*core_intersection).is_some()
-            && self.car_rect.intersect(*core_intersection).is_none()
-        {
-            self.waiting_flag = false;
-            let left_turning_cars = temp_cars
-                .iter()
-                .filter(|car| {
-                    car.car_rect.intersect(*core_intersection).is_some()
-                        && (car.behavior_code == "LR"
-                            || car.behavior_code == "UR"
-                            || car.behavior_code == "DR")
-                })
-                .count();
-
-            if left_turning_cars >= 3
-                || temp_cars.iter().any(|car| {
-                    (car.behavior_code == "DL" || car.behavior_code == "UR")
-                        && car.car_rect.intersect(*core_intersection).is_some()
-                })
-            {
-                self.waiting_flag = true;
-            }
-        }
-        if self.behavior_code == "DU"
-            && self.radar.intersect(*core_intersection).is_some()
-            && self.car_rect.intersect(*core_intersection).is_none()
-        {
-            self.waiting_flag = false;
-            if temp_cars.iter().any(|car| {
-                (car.behavior_code == "DU" || car.behavior_code == "LR")
-                    && car.car_rect.intersect(*core_intersection).is_some()
-            }) {
-                self.waiting_flag = true;
-                // println!("Car {} is waiting before the intersection (DU)", self.id);
+    
+            // Original behavior for other cases
+            match self.behavior_code.as_str() {
+                "LR" | "UR" | "DL" => {
+                    if left_turning_cars >= 2
+                        || temp_cars.iter().any(|car| {
+                            matches!(car.behavior_code.as_str(), "LR" | "UR" | "RL" | "DL")
+                                && car.car_rect.intersect(*core_intersection).is_some()
+                        })
+                    {
+                        self.waiting_flag = true;
+                    }
+                }
+                "LU" | "RD" | "RL" | "UD" | "DU" => {
+                    if temp_cars.iter().any(|car| {
+                        car.behavior_code == self.behavior_code
+                            && car.car_rect.intersect(*core_intersection).is_some()
+                    }) {
+                        self.waiting_flag = true;
+                    }
+                }
+                _ => {}
             }
         }
     }
-
+    
     /// Move one step in the current direction if it doesn't cause a collision.
     pub fn move_one_step_if_no_collide(&mut self, temp_cars: &mut Vec<Car>, intersection: &FRect) {
         // Copy so we can test a hypothetical move

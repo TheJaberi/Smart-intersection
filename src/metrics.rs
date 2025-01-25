@@ -111,7 +111,7 @@ pub fn get_metrics_display() -> (String, Vec<String>) {
         stats.push("Min Time to Pass: No completions".to_string());
     }
 
-    stats.push(format!("Close Calls: {}", metrics.close_call_count));
+    stats.push(format!("Close Calls: {}", (metrics.close_call_count/60) as i32));
 
     (title, stats)
 }
