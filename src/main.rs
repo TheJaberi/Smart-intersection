@@ -266,8 +266,9 @@ fn render_simulation(
         // ---------------------------------------
         // F) Draw all cars
         // ---------------------------------------
+        let debug = cfg!(debug_assertions);
         for car in &cars {
-            car.draw_all_components(canvas, &car_texture, true)
+            car.draw_all_components(canvas, &car_texture, debug)
                 .expect("Failed to draw car");
         }
         // Optionally draw intersection bounds again

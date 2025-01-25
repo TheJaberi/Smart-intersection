@@ -103,7 +103,7 @@ pub fn check_perpendicular_and_move_back(cars: &mut Vec<Car>, i: usize, j: usize
     let before_intersection = car1.intersection_state == IntersectionState::Before
         || car2.intersection_state == IntersectionState::Before;
 
-    if are_perpendicular && both_stopped{
+    if are_perpendicular && both_stopped {
         // Move the car with the lower index back by 5 pixels
         if i < j {
             match cars[i].current_direction.as_str() {
@@ -297,8 +297,10 @@ impl Car {
                 })
                 .count();
 
-            if left_turning_cars >= 3 || temp_cars.iter().any(|car| {
-                    car.behavior_code == "LR"&& car.car_rect.intersect(*core_intersection).is_some()
+            if left_turning_cars >= 3
+                || temp_cars.iter().any(|car| {
+                    car.behavior_code == "LR"
+                        && car.car_rect.intersect(*core_intersection).is_some()
                 })
             {
                 self.waiting_flag = true;
@@ -842,10 +844,10 @@ impl Car {
             self.car_rect.w as u32,
             self.car_rect.h as u32,
         );
-        canvas.fill_rect(car_rect)?;
 
         // If debug, draw the radar rect and car rect with partial alpha
         if debug {
+            canvas.fill_rect(car_rect)?;
             // Enable blending so alpha is visible
             canvas.set_blend_mode(BlendMode::Blend);
 
