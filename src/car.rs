@@ -103,22 +103,22 @@ pub fn check_perpendicular_and_move_back(cars: &mut Vec<Car>, i: usize, j: usize
     let before_intersection = car1.intersection_state == IntersectionState::Before
         || car2.intersection_state == IntersectionState::Before;
 
-    if are_perpendicular && both_stopped && !before_intersection {
+    if are_perpendicular && both_stopped{
         // Move the car with the lower index back by 5 pixels
         if i < j {
             match cars[i].current_direction.as_str() {
-                "West" => cars[i].car_rect.x += 1.0,
-                "East" => cars[i].car_rect.x -= 1.0,
-                "North" => cars[i].car_rect.y += 1.0,
-                "South" => cars[i].car_rect.y -= 1.0,
+                "West" => cars[i].car_rect.x += 0.001,
+                "East" => cars[i].car_rect.x -= 0.001,
+                "North" => cars[i].car_rect.y += 0.001,
+                "South" => cars[i].car_rect.y -= 0.001,
                 _ => {}
             }
         } else {
             match cars[j].current_direction.as_str() {
-                "West" => cars[j].car_rect.x += 1.0,
-                "East" => cars[j].car_rect.x -= 1.0,
-                "North" => cars[j].car_rect.y += 1.0,
-                "South" => cars[j].car_rect.y -= 1.0,
+                "West" => cars[j].car_rect.x += 0.001,
+                "East" => cars[j].car_rect.x -= 0.001,
+                "North" => cars[j].car_rect.y += 0.001,
+                "South" => cars[j].car_rect.y -= 0.001,
                 _ => {}
             }
         }
