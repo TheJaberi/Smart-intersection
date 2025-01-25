@@ -77,6 +77,7 @@ pub fn get_metrics_display() -> (String, Vec<String>) {
     let mut stats = Vec::new();
     stats.push(format!("Total Cars Spawned: {}", metrics.cars_spawned));
     stats.push(format!("Cars Completed Journey: {}", metrics.vehicle_count));
+    stats.push("Collisions: 0".to_string());
 
     // Speed metrics
     if metrics.cars_spawned > 0 {
